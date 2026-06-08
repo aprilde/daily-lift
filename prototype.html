@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Lift — Prototype</title>
+<style>
+  :root {
+    --bg: #0f1424;
+    --card: #1a1a2e;
+    --card-2: #20223d;
+    --line: rgba(255,255,255,0.10);
+    --text: #ffffff;
+    --muted: rgba(255,255,255,0.55);
+    --faint: rgba(255,255,255,0.35);
+    --green: #34a853;
+    --accent: #6c8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1c2747 0%, transparent 60%), var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px; gap: 18px;
+  }
+  .page-label { font-size: 12px; color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .card {
+    width: 390px; max-width: 100%;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 22px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 12px; border-bottom: 1px solid var(--line);
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .title { font-size: 18px; font-weight: 700; }
+  .focus-tag { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .nav { display: flex; align-items: center; gap: 4px; }
+  .nav button {
+    width: 30px; height: 30px; border-radius: 9px;
+    border: 1px solid var(--line); background: rgba(255,255,255,0.05);
+    color: var(--text); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+  }
+  .nav button:hover { background: rgba(255,255,255,0.14); }
+  .badge {
+    font-size: 11px; background: rgba(108,140,255,0.18); color: #b9c7ff;
+    border-radius: 20px; padding: 3px 10px; margin-left: 6px;
+  }
+
+  .cols {
+    display: grid; grid-template-columns: 24px 1fr 70px 92px 24px;
+    gap: 8px; padding: 9px 16px 7px;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--faint); background: rgba(255,255,255,0.03);
+  }
+  .cols .r { text-align: center; }
+
+  .row {
+    display: grid; grid-template-columns: 24px 1fr 70px 92px 24px;
+    gap: 8px; align-items: center;
+    padding: 9px 16px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .row.done .ex-name { text-decoration: line-through; color: var(--faint); }
+
+  .trash {
+    background: none; border: none; cursor: pointer; padding: 2px;
+    color: var(--faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s;
+  }
+  .trash:hover { color: #ff7a7a; }
+  .trash svg { width: 15px; height: 15px; }
+
+  .add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; padding: 11px; margin: 0;
+    background: rgba(108,140,255,0.10); border: none; border-top: 1px solid var(--line);
+    color: var(--accent); font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .add-btn:hover { background: rgba(108,140,255,0.18); }
+  .add-btn svg { width: 15px; height: 15px; }
+
+  .check {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.3); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .check.on { background: var(--green); border-color: var(--green); }
+  .check svg { width: 12px; height: 12px; display: none; }
+  .check.on svg { display: block; }
+
+  .ex-cell { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .ex-name {
+    font-size: 14px; color: rgba(255,255,255,0.92); cursor: pointer;
+    border-bottom: 1px dashed transparent; padding-bottom: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ex-name:hover { border-bottom-color: rgba(255,255,255,0.25); }
+  .pencil {
+    background: none; border: none; cursor: pointer; padding: 2px;
+    color: var(--faint); flex-shrink: 0; display: flex; align-items: center;
+  }
+  .pencil:hover { color: var(--accent); }
+  .pencil svg { width: 13px; height: 13px; }
+  .ex-name-input {
+    font-size: 14px; font-family: inherit;
+    background: rgba(108,140,255,0.12); border: 1px solid var(--accent);
+    border-radius: 6px; color: var(--text); padding: 3px 6px; width: 100%;
+  }
+  .ex-name-input:focus { outline: none; }
+
+  .field {
+    background: rgba(255,255,255,0.07); border: 1px solid transparent;
+    border-radius: 7px; color: var(--text); font-size: 13px; font-family: inherit;
+    padding: 5px 7px; width: 100%; text-align: center; transition: border 0.15s, background 0.15s;
+  }
+  .field:focus { outline: none; border-color: var(--accent); background: rgba(108,140,255,0.12); }
+  .field::placeholder { color: var(--faint); }
+  .weight-wrap { position: relative; }
+  .weight-wrap .unit { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--faint); pointer-events: none; }
+  .weight-wrap .field { padding-right: 22px; text-align: left; }
+
+  .rest { padding: 36px 22px 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .rest .moon { font-size: 44px; }
+  .rest h2 { font-size: 20px; font-weight: 700; }
+  .rest p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .rest .nextup { width: 100%; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 14px; text-align: left; margin-top: 6px; }
+  .rest .nextup .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
+  .rest .nextup .ex { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px; line-height: 1.4; }
+
+  .celebrate {
+    margin: 0 16px 12px; padding: 10px 14px;
+    background: rgba(52,167,83,0.15); border: 1px solid rgba(52,167,83,0.4);
+    border-radius: 12px; font-size: 13px; color: #8fe0a4; text-align: center;
+  }
+
+  .footer {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 16px; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--faint);
+  }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
+  .overlay.on { display: flex; }
+  .popup { background: var(--card-2); border: 1px solid var(--line); border-radius: 18px; width: 340px; max-width: 100%; overflow: hidden; }
+  .popup .pic { height: 190px; background: linear-gradient(135deg, #2a2f52, #1a1d33); display: flex; align-items: center; justify-content: center; color: var(--faint); font-size: 13px; text-align: center; padding: 16px; border-bottom: 1px solid var(--line); }
+  .popup .body { padding: 16px 18px 18px; }
+  .popup h3 { font-size: 17px; margin-bottom: 4px; }
+  .popup .meta { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .popup .tip-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 3px; }
+  .popup .tip { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+  .popup .close { margin-top: 16px; width: 100%; padding: 10px; border-radius: 10px; border: none; background: var(--accent); color: white; font-size: 14px; font-family: inherit; cursor: pointer; }
+
+  .hint { width: 390px; max-width: 100%; font-size: 11.5px; color: var(--faint); line-height: 1.6; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="page-label">Daily Lift — Prototype</div>
+  <div id="app"></div>
+  <div class="hint">
+    Tap a weight or reps value to edit. Tap the ✏️ to rename an exercise.
+    Tap the exercise name for a demo image &amp; form tip. ‹ › flips days. Edits save automatically.
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="popup">
+      <div class="pic" id="popupPic">Exercise demo image would appear here</div>
+      <div class="body">
+        <h3 id="popupName">Exercise</h3>
+        <div class="meta" id="popupMeta"></div>
+        <div class="tip-lbl">Form tip</div>
+        <div class="tip" id="popupTip"></div>
+        <button class="close" onclick="closePopup()">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const DEFAULT_DATA = {
+  Monday: { focus: "Lower body", ex: [
+    { name: "Goblet squat", weight: "", reps: "8-12 reps", tip: "Hold the weight at your chest, sit back like into a chair, knees tracking over toes." },
+    { name: "Dumbbell RDL", weight: "", reps: "8-12 reps", tip: "Hinge at the hips with a flat back, lower the weights along your legs, feel it in your hamstrings." },
+    { name: "Reverse lunges", weight: "", reps: "8-10 ea leg", tip: "Step backward, drop your back knee toward the floor, push through your front heel to stand." },
+    { name: "Split squats", weight: "", reps: "8-10 ea leg", tip: "Keep most of your weight on your front foot, lower straight down, stay tall." },
+    { name: "Glute bridge", weight: "", reps: "12-15 reps", tip: "Lie on your back, drive through your heels, squeeze your glutes at the top." },
+    { name: "Standing calf raises", weight: "", reps: "12-20 reps", tip: "Rise onto your toes slowly, pause at the top, lower with control." },
+    { name: "Dead bugs", weight: "bodyweight", reps: "10-12 ea side", tip: "Press your lower back into the floor, extend opposite arm and leg slowly." }
+  ]},
+  Tuesday: { focus: "Upper body push", ex: [
+    { name: "Dumbbell floor press", weight: "", reps: "8-12 reps", tip: "Lie on your back, press the weights straight up, lower until your elbows touch the floor." },
+    { name: "Shoulder press", weight: "", reps: "8-12 reps", tip: "Press the weights overhead, keep your core tight, don't arch your back." },
+    { name: "Push-ups", weight: "bodyweight", reps: "AMRAP", tip: "Keep a straight line from head to heels. Drop to your knees if needed, that's totally fine." },
+    { name: "Lateral raises", weight: "", reps: "12-15 reps", tip: "Lift the weights out to your sides to shoulder height, slight bend in elbows." },
+    { name: "Tricep extensions", weight: "", reps: "10-15 reps", tip: "Keep your elbows pointing forward, only your forearms move." },
+    { name: "Front raises", weight: "", reps: "10-12 reps", tip: "Raise the weights straight in front to shoulder height, lower slowly." },
+    { name: "Leg raises", weight: "bodyweight", reps: "10-12 reps", tip: "Keep your legs straight, lower them slowly without arching your back off the floor." }
+  ]},
+  Wednesday: { focus: "Lower body", ex: [
+    { name: "Dumbbell RDL", weight: "", reps: "8-12 reps", tip: "Hinge at the hips with a flat back, feel the stretch in your hamstrings." },
+    { name: "Sumo dumbbell squat", weight: "", reps: "10-12 reps", tip: "Wide stance, toes pointed out, hold one weight between your legs and squat down." },
+    { name: "Single-leg RDL", weight: "", reps: "8-10 ea leg", tip: "Balance on one leg, hinge forward, extend the other leg behind you. Go slow." },
+    { name: "Side lunges", weight: "", reps: "8-10 ea side", tip: "Step out to the side, bend that knee, keep the other leg straight." },
+    { name: "Glute bridge march", weight: "bodyweight", reps: "10 ea side", tip: "Hold a bridge, then lift one knee at a time without dropping your hips." },
+    { name: "Wall sit", weight: "bodyweight", reps: "30-60 sec", tip: "Back flat against the wall, slide down until your thighs are parallel to the floor." },
+    { name: "Russian twists", weight: "", reps: "10-12 ea side", tip: "Lean back slightly, rotate your torso side to side, keep your core engaged." }
+  ]},
+  Thursday: { focus: "Upper body pull", ex: [
+    { name: "Bent-over row", weight: "", reps: "8-12 reps", tip: "Hinge forward with a flat back, pull the weights to your ribs, squeeze your shoulder blades." },
+    { name: "Wide bent-over row", weight: "", reps: "8-12 reps", tip: "Same as a row but pull with elbows wider, targets your upper back." },
+    { name: "Reverse fly", weight: "", reps: "12-15 reps", tip: "Bent over, raise the weights out to your sides, squeeze your shoulder blades together." },
+    { name: "Bicep curls", weight: "", reps: "10-15 reps", tip: "Keep your elbows pinned to your sides, curl the weights up slowly." },
+    { name: "Hammer curls", weight: "", reps: "10-15 reps", tip: "Like a curl but palms face each other, like holding hammers." },
+    { name: "Shrugs", weight: "", reps: "12-15 reps", tip: "Lift your shoulders straight up toward your ears, pause, lower slowly." },
+    { name: "Plank", weight: "bodyweight", reps: "30-60 sec", tip: "Straight line head to heels, squeeze your core, don't let your hips sag." }
+  ]},
+  Friday: { focus: "Full body", ex: [
+    { name: "Squat to press", weight: "", reps: "8-10 reps", tip: "Squat down, then as you stand press the weights overhead in one smooth move." },
+    { name: "Dumbbell deadlift", weight: "", reps: "8-12 reps", tip: "Weights in front of your legs, hinge and lower, drive through your heels to stand." },
+    { name: "Renegade row", weight: "", reps: "6-10 ea side", tip: "In a plank holding weights, row one up at a time, keep your hips steady." },
+    { name: "Walking lunges", weight: "", reps: "10 ea leg", tip: "Step forward into a lunge, then bring the back leg through into the next step." },
+    { name: "Floor press", weight: "", reps: "8-12 reps", tip: "Lie down, press the weights up, lower until your elbows touch the floor." },
+    { name: "Mountain climbers", weight: "bodyweight", reps: "10-12 ea side", tip: "In a plank, drive your knees toward your chest one at a time, quick but controlled." }
+  ]}
+};
+
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const WORKOUT_DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+
+function loadData() {
+  try { const s = localStorage.getItem("dailyLiftData"); if (s) return JSON.parse(s); } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function saveData() { localStorage.setItem("dailyLiftData", JSON.stringify(data)); }
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function loadCompleted() {
+  try { const s = JSON.parse(localStorage.getItem("dailyLiftDone")||"{}"); if (s.date !== todayKey()) return {date: todayKey(), done:{}}; return s; }
+  catch(e){ return {date: todayKey(), done:{}}; }
+}
+function saveCompleted() { localStorage.setItem("dailyLiftDone", JSON.stringify(completed)); }
+
+let data = loadData();
+let completed = loadCompleted();
+let viewIndex = new Date().getDay();
+let editingName = null;
+
+function render() {
+  const app = document.getElementById("app");
+  const dayName = DAYS[viewIndex];
+  const isToday = viewIndex === new Date().getDay();
+  const isRest = !WORKOUT_DAYS.includes(dayName);
+
+  let inner = `
+    <div class="header">
+      <div class="header-left">
+        <div class="dot"></div>
+        <div>
+          <div class="title">${dayName}${isToday ? '<span class="badge">Today</span>' : ''}</div>
+          ${!isRest ? `<div class="focus-tag">${data[dayName].focus}</div>` : ''}
+        </div>
+      </div>
+      <div class="nav">
+        <button onclick="flip(-1)">‹</button>
+        <button onclick="flip(1)">›</button>
+      </div>
+    </div>`;
+
+  if (isRest) {
+    const mon = data.Monday.ex.slice(0,3).map(e => e.name).join(", ");
+    inner += `
+      <div class="rest">
+        <div class="moon">🌙</div>
+        <h2>Rest &amp; recover</h2>
+        <p>No workout today.<br>Let your muscles rebuild.</p>
+        <div class="nextup">
+          <div class="lbl">Next up — Monday · Lower body</div>
+          <div class="ex">${mon} + more</div>
+        </div>
+      </div>`;
+  } else {
+    const list = data[dayName].ex;
+    const allDone = isToday && list.length > 0 && list.every((_, i) => completed.done[i]);
+    inner += `<div class="cols"><span></span><span>Exercise</span><span class="r">Weight</span><span class="r">Reps</span></div>`;
+    list.forEach((ex, i) => {
+      const isDone = isToday && completed.done[i];
+      const nameCell = (editingName === i)
+        ? `<input class="ex-name-input" value="${ex.name.replace(/"/g,'&quot;')}" id="nameEdit${i}"
+             onblur="saveName('${dayName}', ${i}, this.value)"
+             onkeydown="if(event.key==='Enter')this.blur()">`
+        : `<span class="ex-name" onclick="showPopup('${dayName}', ${i})">${ex.name}</span>
+           <button class="pencil" onclick="startRename(${i})" title="Rename">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+           </button>`;
+      inner += `
+        <div class="row ${isDone ? 'done' : ''}">
+          <div class="check ${isDone ? 'on' : ''}" onclick="toggleDone(${i})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div class="ex-cell">${nameCell}</div>
+          <div class="weight-wrap">
+            <input class="field" value="${ex.weight}" placeholder="—"
+                   onchange="edit('${dayName}', ${i}, 'weight', this.value)">
+            ${ex.weight && ex.weight !== 'bodyweight' ? '<span class="unit">lb</span>' : ''}
+          </div>
+          <input class="field" value="${ex.reps}" onchange="edit('${dayName}', ${i}, 'reps', this.value)">
+          <button class="trash" onclick="deleteExercise('${dayName}', ${i})" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>`;
+    });
+    inner += `<button class="add-btn" onclick="addExercise('${dayName}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add exercise
+      </button>`;
+    if (allDone) inner += `<div class="celebrate">Nice work — you finished today's workout! 🎉</div>`;
+  }
+
+  inner += `<div class="footer">${isRest ? 'Weekend' : 'Tap any value to edit · ✏️ to rename'}</div>`;
+  app.innerHTML = `<div class="card">${inner}</div>`;
+  if (editingName !== null) { const el = document.getElementById("nameEdit"+editingName); if (el) el.focus(); }
+}
+
+function flip(dir) { editingName = null; viewIndex = (viewIndex + dir + 7) % 7; render(); }
+function edit(day, i, field, value) { data[day].ex[i][field] = value; saveData(); render(); }
+function startRename(i) { editingName = i; render(); }
+function saveName(day, i, value) { if (value.trim()) data[day].ex[i].name = value.trim(); editingName = null; saveData(); render(); }
+function toggleDone(i) { completed.date = todayKey(); completed.done[i] = !completed.done[i]; saveCompleted(); render(); }
+function addExercise(day) {
+  data[day].ex.push({ name: "New exercise", weight: "", reps: "10-12 reps", tip: "Add your own note here by editing this exercise." });
+  editingName = data[day].ex.length - 1;
+  saveData(); render();
+}
+function deleteExercise(day, i) {
+  const ex = data[day].ex[i];
+  if (confirm('Remove "' + ex.name + '" from ' + day + '?')) {
+    data[day].ex.splice(i, 1);
+    // shift completion flags down so checkmarks stay with the right rows
+    const newDone = {};
+    Object.keys(completed.done).forEach(k => {
+      const n = parseInt(k);
+      if (n < i) newDone[n] = completed.done[n];
+      else if (n > i) newDone[n-1] = completed.done[n];
+    });
+    completed.done = newDone;
+    saveData(); saveCompleted(); render();
+  }
+}
+function showPopup(day, i) {
+  const ex = data[day].ex[i];
+  document.getElementById("popupName").textContent = ex.name;
+  document.getElementById("popupMeta").textContent = (ex.weight ? ex.weight + (ex.weight!=='bodyweight'?' lb':'') + " · " : "") + ex.reps;
+  document.getElementById("popupTip").textContent = ex.tip || "—";
+  document.getElementById("popupPic").textContent = "Demo image of: " + ex.name;
+  document.getElementById("overlay").classList.add("on");
+}
+function closePopup() { document.getElementById("overlay").classList.remove("on"); }
+document.getElementById("overlay").addEventListener("click", function(e){ if (e.target === this) closePopup(); });
+
+render();
+</script>
+</body>
+</html>
