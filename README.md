@@ -4,6 +4,10 @@ A home-workout app concept for beginners — designed for women working out at h
 
 This repository documents the product thinking and the working prototype, from problem through to a phased build plan.
 
+DEMO: 
+
+![Prototype demo](images/demo.gif)
+
 ---
 
 ## The problem
