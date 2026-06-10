@@ -22,7 +22,7 @@ My role here is product-side: scoping, evaluating, deciding, and steering the AI
 
 This project was built through an AI-assisted workflow — exploring an idea, hitting a wall with the first approach, redirecting, prototyping, and scoping the real build. Rather than detail every step here, the full story (including dead ends and decisions) lives in a running build log that grows as the project continues:
 
-**→ See [`Build-Log.md`](.docs/BUILD-LOG.md) for the full process.**
+**→ See [`Build-Log.md`](./docs/BUILD-LOG.md) for the full process.**
 
 ---
 
@@ -90,12 +90,15 @@ The real product is planned as a **native Android app** (Kotlin + Jetpack Compos
 ```
 daily-lift/
 ├── README.md
+├── docs/
+│   └── BUILD-LOG.md                            # The running process journal
 ├── prototype/                                  # The vibe-coding stage
 │   ├── workout-widget-prototype.html           # The working prototype — open in a browser
-│   └── claude-code-prompt-phase1-app.md        # Build plan / spec handed to Claude Code
+│   └── claude-code-prompt-phase1-app.md        # Build spec handed to the AI coding tool
 ├── build/                                      # The native app work + installable result (in progress)
 └── images/
     └── prototype-demo.gif                      # Screen recording of the prototype
+``
 ```
 
 ## Status
