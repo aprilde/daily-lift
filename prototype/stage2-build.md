@@ -1,4 +1,4 @@
-# Claude Code Prompt — Phase 1: Native Android App ("Daily Lift")
+# Claude Code Prompt — Stage 2: Native Android App ("Daily Lift")
 
 > Paste everything below the line into Claude Code. It is written so Claude Code
 > builds the app in reviewable steps and checks in with you between them.
