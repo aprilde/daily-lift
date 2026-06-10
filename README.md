@@ -1,10 +1,22 @@
 # Daily Lift
 
-A home-workout app concept for beginners — designed for women working out at home who are new to exercise and want a clear, encouraging, glanceable routine without the intimidation of typical fitness apps.
+**A learning project demonstrating an AI-assisted product workflow — taking an idea from rough concept to a working, tested prototype and a scoped build plan, using AI tools throughout.**
 
-This repository documents the product thinking and a working prototype, from problem through to a phased build plan.
+The product itself is a home-workout app for beginners (the vehicle); the focus of this repo is the *process* — how the idea was explored, where the approach was redirected, and the product decisions made along the way.
 
 ![Prototype demo](images/demo.gif)
+
+---
+
+## What this project demonstrates
+
+Driving an AI-assisted workflow from idea → prototype → build spec
+Recognizing when an approach isn't working and redirecting quickly
+Evaluating off-the-shelf options and articulating why they don't fit
+Making deliberate scope and tradeoff decisions, not just generating output
+Translating a working prototype into a clear specification for a build
+
+My role here is product-side: scoping, evaluating, deciding, and steering the AI — not hand-writing the code. The native build is in progress; this repo captures the work through a complete, tested prototype.
 
 ---
 
