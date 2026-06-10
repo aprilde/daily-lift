@@ -22,7 +22,7 @@ My role here is product-side: scoping, evaluating, deciding, and steering the AI
 
 This project was built through an AI-assisted workflow — exploring an idea, hitting a wall with the first approach, redirecting, prototyping, and scoping the real build. Rather than detail every step here, the full story (including dead ends and decisions) lives in a running build log that grows as the project continues:
 
-**→ See [`BUILD-LOG.md`](./BUILD-LOG.md) for the full process.**
+**→ See [`Build-Log.md`](.docs/BUILD-LOG.md) for the full process.**
 
 ---
 
