@@ -1,0 +1,236 @@
+# Stage 3: Build Plan (HARDENED)
+
+*A prompt to paste into Claude Code.*
+
+> **Status: HARDENED.** This plan incorporates the Stage 2 team review and all
+> 8 PM decisions recorded in `DECISION-LOG.md`. This is the version to build
+> from. Where this plan and the prototype (`workout-widget-prototype.html`)
+> disagree, **this plan wins** — the disagreements were deliberate decisions,
+> not oversights, and are explained inline below.
+
+---
+
+## The build prompt
+
+> Paste everything below the line into Claude Code. Attach this file plus the
+> working prototype (`workout-widget-prototype.html`) — the prototype remains
+> the source of truth for layout, behavior, and default workout data **except**
+> where this plan explicitly overrides it.
+
+---
+
+I am not a developer. I'm building a native Android app called **Daily Lift**
+and I'll need you to guide me through everything, including environment setup,
+in plain language. Explain what you're doing as you go, and stop to let me
+test after each phase rather than building everything at once.
+
+## What the app is (v1 scope)
+
+A simple home-workout app for beginners (target users: women working out at
+home, new to exercise, possibly a little anxious about doing things wrong). It
+shows a different workout for each weekday, lets the user track and edit their
+workouts, shows a start/end reference image for every exercise, and saves
+everything locally on the device. **There is no login, no cloud, no backend,
+no analytics, no monetization.** All data stays on the device.
+
+**The home screen widget is explicitly NOT part of v1.** It's deferred to v2,
+once the phone app is working and proven on a real device. v1's data model is
+built so the widget can read the same data later without a rewrite — see "Data
+model" below.
+
+## Build environment first
+
+Before any app code, walk me through setting up everything I need to build and
+run an Android app, since I have none of it: Android Studio, the SDK, and
+running the app either on an emulator or my physical phone. Confirm my
+environment can build and launch a blank app before we go further.
+
+## Tech choices
+
+- **Language:** Kotlin
+- **UI:** Jetpack Compose
+- **Storage:**
+  - **Workout data** (days, focus labels, exercises, tips, image references) —
+    a single JSON file in app-private internal storage, read/written via
+    `kotlinx.serialization`.
+  - **Completion state** (today's date + a map of exercise-id → done) —
+    SharedPreferences.
+  - *Why not Room/SQLite:* the dataset is tiny (5 days x ~7 exercises, no
+    relational queries), and Room's async/Flow-based DAOs are awkward for a
+    future widget process to read quickly. A flat JSON file plus
+    SharedPreferences are both simple and synchronously readable.
+- **Minimum SDK: API 26 (Android 8.0).** Covers ~98% of active devices and has
+  no friction for Compose now or RemoteViews/Glance when the widget is built
+  in v2.
+- No third-party services, no network permission needed.
+
+## Data model
+
+```
+Exercise:
+  id: String              // stable UUID, generated once at creation, never reused
+  name: String
+  weight: String          // "" | "bodyweight" | numeric string (e.g. "15")
+  reps: String            // e.g. "8-12 reps", "as many as you can", "30-60 sec"
+  tip: String
+  imageStartRef: String   // bundled drawable resource name — start position
+  imageEndRef: String     // bundled drawable resource name — end position
+
+WorkoutDay:
+  focus: String           // e.g. "Lower body"
+  exercises: List<Exercise>
+
+WorkoutData: Map<Weekday, WorkoutDay>   // Monday-Friday only; Sat/Sun = rest days, no entry
+
+Completion:
+  date: String                  // "YYYY-MM-DD", device-local date
+  done: Map<String, Boolean>    // keyed by Exercise.id, NOT array index
+```
+
+Seed `WorkoutData` on first launch with the prototype's default content
+(Monday-Friday, same exercises/focus labels/tips as `DEFAULT_DATA` in the
+prototype), with these adjustments:
+
+- **"AMRAP" → "as many as you can"** wherever it appears in `reps`.
+- Every exercise gets a **generated `id`** at seed time.
+- Every exercise gets `imageStartRef` / `imageEndRef` pointing to its image
+  (see Step E for how these get created).
+
+## Screens & behavior
+
+This mirrors the prototype's layout and tone, with the following hardened
+additions/overrides:
+
+1. **Main screen = today's workout.** On open **and on every resume/foreground**,
+   recompute "today" from the system date. If the date has changed since the
+   app was last in the foreground, refresh the "Today" badge and reset the
+   completion display for the new day. Completion is date-stamped and resets
+   daily by design — no history of past days' checkmarks is kept, and viewing
+   a non-today day always shows exercises as unchecked.
+
+2. **Day navigation.** Left/right controls flip through all 7 days; each shows
+   its focus label.
+
+3. **"Do 3 sets of each exercise below."** A single static line of UI copy
+   shown once per workout-day view (below the focus label). This is **not**
+   stored data — it's the same hardcoded sentence on every workout day. Reps
+   strings themselves stay as in the prototype (aside from the AMRAP fix
+   above) — they don't repeat "3 sets" per row.
+
+4. **Rest day screen (Saturday/Sunday)** — matches the prototype: a calm "Rest
+   & recover" message plus a preview of Monday's first few exercises ("Next
+   up"). Hardcoded to reference Monday — correct for both Saturday and Sunday
+   given the fixed Mon-Fri workout schedule.
+
+5. **Empty workout day** (a weekday where the user has deleted every
+   exercise): show **"Rest Day"** in place of the exercise list. Unlike the
+   Sat/Sun screen, the **"Add exercise" button stays visible** so the user
+   isn't stuck with no way to repopulate the day.
+
+6. **Per exercise, the user can:**
+   - **Check it off as done.** Completion is keyed by `Exercise.id` (not
+     position), resets daily.
+   - **Edit the weight** (numeric text) **or toggle "Bodyweight."** A small
+     toggle near the weight field: when on, `weight = "bodyweight"` and the
+     numeric input is hidden/disabled; when off, numeric entry is available.
+     Display logic: `""` → "—", `"bodyweight"` → "Body" (no unit suffix),
+     numeric → "{value} lb".
+   - **Edit the reps** (free text, as in the prototype).
+   - **Rename it** (pencil icon), capped at **30 characters**.
+   - **Delete it** (with a confirm dialog) — removes the exercise and its
+     `id`'s entry from the completion map. No index-reshifting needed.
+   - **Tap it to open a detail view** showing: name, weight/reps line, a
+     **start-position image**, an **end-position image** (labeled "Start" /
+     "End"), and the text form tip.
+
+7. **Add exercise** button per day. The new exercise gets a generated `id`,
+   the existing default tip text ("Add your own note here by editing this
+   exercise."), and a **generic placeholder start/end image pair** (it has no
+   dedicated art).
+
+8. **All-done message.** When every exercise for today is checked off (and the
+   day's exercise list is non-empty), show a brief encouraging message.
+
+**Known v1 limitation (documented, not a bug):** if a user renames or
+repurposes an exercise, its tip text and images stay as originally
+seeded/generated — there's no edit UI for tip or images in v1. This is an
+accepted tradeoff; tip/image editing is a v2 item.
+
+Match the visual style of the prototype: dark card aesthetic, clean and
+friendly, large readable text. The tone is supportive and beginner-friendly,
+never intimidating.
+
+## Accessibility floor (applies to every screen)
+
+- **Contrast:** any text that conveys meaning — column headers, footer copy,
+  the "Rest Day" / "Next up" labels — must hit **at least 4.5:1 contrast**
+  against its background. The prototype's low-contrast faint-gray styling for
+  these elements needs a higher-contrast color; this is a color-token change
+  only, no layout impact.
+- **Tap targets:** the checkbox, day-nav arrows, pencil, trash, and the new
+  Bodyweight toggle each get a minimum **48x48dp tappable area** (via padding
+  / `minimumInteractiveComponentSize`), even where the visual icon stays
+  small.
+- **Text scaling:** the layout must not clip or truncate data at **130%**
+  system font scale. If a row would overflow at 130%, it **wraps to two
+  lines** (exercise name on top; weight, reps, Bodyweight toggle, and
+  action icons below) rather than clipping or truncating text. (Support for
+  200% scale is deferred to v2.)
+- **Screen readers:** every icon-only control gets a `contentDescription`
+  that includes its current state — e.g., "Mark Goblet squat done" /
+  "Goblet squat, marked done", "Rename Goblet squat", "Bodyweight toggle, on".
+  The "—" empty-weight indicator gets a spoken label ("no weight set"), not a
+  literal dash.
+
+## Explicitly out of scope for v1 (parked, not forgotten)
+
+- **Home screen widget** — v2, once the phone app is working and proven. The
+  data model above (stable IDs, JSON file + SharedPreferences) is built so the
+  widget can read it later without a data migration.
+- **First-launch onboarding / reassurance message** — needs its own discovery
+  pass to get the tone and content right; not built blind in v1.
+- **Editing form tips and images** for renamed or custom exercises — v2.
+- **200% font-scale support** and any deeper layout redesign it would require
+  — v2.
+- **Marketing/growth, monetization, accounts/cloud sync, analytics, and
+  security beyond basic local-data hygiene** — deferred per the original
+  product brief; not reconsidered in this review.
+
+## How to proceed
+
+Work in clear steps and pause after each so I can run it on my phone and
+confirm before continuing:
+
+- **Step A — Environment setup + a blank app that launches.** Walk me through
+  Android Studio, SDK, and emulator/device setup. Confirm a minimal "Hello
+  Daily Lift" Compose app builds and runs before anything else.
+
+- **Step B — Data model + seed data + local persistence.** Implement the
+  `Exercise` / `WorkoutDay` / `Completion` model above, including `id`,
+  `imageStartRef`, and `imageEndRef`. Seed the JSON file with the prototype's
+  default workout data (with the AMRAP → "as many as you can" fix and
+  generated IDs). Show me that data saves and reloads correctly across an app
+  restart.
+
+- **Step C — Main "today" screen + day navigation (read-only first).** Show
+  today's workout on open; left/right day navigation with focus labels; the
+  static "Do 3 sets of each exercise below" line; the Sat/Sun "Rest & recover"
+  + "Next up" screen. Recompute "today" on every resume, not just at launch.
+  Apply the accessibility contrast fixes here (column headers, labels).
+
+- **Step D — Editing.** Check off (by `id`), edit weight/reps, the Bodyweight
+  toggle, rename (30-char cap), add exercise (with placeholder image pair),
+  delete (with confirm dialog). Implement the empty-day "Rest Day" treatment
+  with the "Add exercise" button retained. Apply the 48dp tap-target padding
+  and the 130%-font-scale row-wrap behavior here.
+
+- **Step E — Detail view + visuals + all-done message.** Build the exercise
+  detail view (name, weight/reps, start image, end image, form tip). Generate
+  the ~70 start/end images for the 35 default exercises plus one generic
+  placeholder pair (used as a fallback for user-added exercises), and wire
+  them into the data seeded in Step B. Implement the all-done celebration
+  message.
+
+At each step, tell me exactly what to tap/run to verify it works, and keep the
+storage layer (JSON file + SharedPreferences) decoupled from the UI code, so
+the widget (v2) can be added later without restructuring the data layer.
