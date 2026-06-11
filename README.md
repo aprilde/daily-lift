@@ -75,9 +75,12 @@ daily-lift/
 │   └── README.md
 ├── 2-team-review/
 │   ├── stage2-team-review-prompt.md            # Multi-role review prompt
+│   ├── team-review-summary.md                  # Final Team review and takeaways
+│   ├── DECISION-LOG.md                         # All team conflicts reviewed with PM(me) 
 │   └── README.md
 ├── 3-build/
 │   ├── stage3-build-prompt-DRAFT.md            # Draft build plan (input to the review)
+│   ├── build-plan-hardened.md                  # Final build plan after team review and conflicts addressed
 │   └── README.md
 └── images/
     └── demo.gif                      # Screen recording of the prototype
