@@ -21,6 +21,7 @@ The review deliberately forces real disagreements between the agents into the op
 
 ## What running this produces
 
+- `team-review-summary.md` - the full review from each agent team memeber
 - `DECISION-LOG.md` - the record of each disagreement, the options, the PM's call, and the rationale
 - `build-plan-hardened.md` - the revised build plan that the build stage (`../3-build/`) will execute
 
