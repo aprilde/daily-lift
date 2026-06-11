@@ -80,7 +80,7 @@ daily-lift/
 │   ├── stage3-build-prompt-DRAFT.md            # Draft build plan (input to the review)
 │   └── README.md
 └── images/
-    └── prototype-demo.gif                      # Screen recording of the prototype
+    └── demo.gif                      # Screen recording of the prototype
 ```
 
 ## Status
