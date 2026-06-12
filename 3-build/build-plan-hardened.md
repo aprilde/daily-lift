@@ -225,11 +225,18 @@ confirm before continuing:
   and the 130%-font-scale row-wrap behavior here.
 
 - **Step E — Detail view + visuals + all-done message.** Build the exercise
-  detail view (name, weight/reps, start image, end image, form tip). Generate
-  the ~70 start/end images for the 35 default exercises plus one generic
-  placeholder pair (used as a fallback for user-added exercises), and wire
-  them into the data seeded in Step B. Implement the all-done celebration
-  message.
+  detail view (name, weight/reps, start image, end image, form tip).
+
+  Image generation: AI-generated illustrations (not photos), in a calm,
+  friendly style consistent with the app's supportive tone — every human
+  figure depicted as a woman, matching the target audience. Before generating
+  the full set, **generate one sample image (one exercise's start position)
+  and pause for PM approval** of the style/tone. Once approved, generate the
+  remaining ~69 images (35 exercises x start/end) plus one generic placeholder
+  pair (used as a fallback for user-added exercises) in the same approved
+  style, and wire them into the data seeded in Step B.
+
+  Implement the all-done celebration message.
 
 At each step, tell me exactly what to tap/run to verify it works, and keep the
 storage layer (JSON file + SharedPreferences) decoupled from the UI code, so
