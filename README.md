@@ -15,8 +15,8 @@ This repo is organized around the lifecycle, so the process is visible at a glan
 | Stage | Folder | What's in it |
 |-------|--------|--------------|
 | **1 - Prototype** | [`1-prototype/`](./1-prototype/) | The live, interactive HTML prototype - a working mockup of the idea, built iteratively with AI. Open it in any browser. |
-| **2 - Team review** | [`2-team-review/`](./2-team-review/) | A structured, multi-role review (engineer, QA, designer, accessibility, a beginner-user voice, and more) that stress-tests the prototype and hardens the plan before any code is written. |
-| **3 - Build** | [`3-build/`](./3-build/) | The actual work to build the MVP - the native Android app and home screen widget - through to an installable result. In progress. |
+| **2 - Team review** | [`2-team-review/`](./2-team-review/) | A structured, multi-role review (engineer, QA, designer, accessibility, a beginner-user voice, and more) that stress-tested the prototype and produced the hardened build plan and a recorded decision log before any code was written. |
+| **3 - Build** | [`3-build/`](./3-build/) | Building the MVP from the hardened plan: the native Android app (Kotlin + Jetpack Compose), through to an installable result. In progress. |
 
 Supporting context lives in [`docs/`](./docs/): a brief [discovery note](./docs/DISCOVERY.md) and a running [build log](./docs/BUILD-LOG.md).
 
@@ -72,20 +72,24 @@ daily-lift/
 │   └── BUILD-LOG.md                            # Running process journal
 ├── 1-prototype/
 │   ├── workout-widget-prototype.html           # The live prototype - open in a browser
+│   ├── prototype-testing-edits.html            # Earlier version (edit-in-widget approach)
 │   └── README.md
 ├── 2-team-review/
 │   ├── stage2-team-review-prompt.md            # Multi-role review prompt
-│   ├── team-review-summary.md                  # Final Team review and takeaways
-│   ├── DECISION-LOG.md                         # All team conflicts reviewed with PM(me) 
+│   ├── team-review-summary.md                  # Summary of the review and conflicts found
+│   ├── DECISION-LOG.md                         # Each decision and its rationale
+│   ├── build-plan-hardened.md                  # The hardened plan the build follows
 │   └── README.md
 ├── 3-build/
-│   ├── stage3-build-prompt-DRAFT.md            # Draft build plan (input to the review)
-│   ├── build-plan-hardened.md                  # Final build plan after team review and conflicts addressed
+│   ├── stage3-build-prompt-DRAFT.md            # Draft build plan (pre-review input)
+│   ├── test-plan.md                            # Full v1 test plan (46 cases)
 │   └── README.md
 └── images/
-    └── demo.gif                      # Screen recording of the prototype
+    └── demo.gif                                # Screen recording of the prototype
 ```
 
 ## Status
 
-Prototype complete and tested. Team review complete and tested. Build prompt ready.
+## Status
+
+Prototype complete and tested. Team review complete, with the hardened plan and decision log recorded. Native build in up next. 
