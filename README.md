@@ -90,6 +90,4 @@ daily-lift/
 
 ## Status
 
-## Status
-
 Prototype complete and tested. Team review complete, with the hardened plan and decision log recorded. Native build in up next. 
