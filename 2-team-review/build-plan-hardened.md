@@ -7,6 +7,17 @@ see test-plan.md for the measurement methodology)`
 
 *A prompt to paste into Claude Code.*
 
+> **Recommended Claude model to run this build:** Claude Sonnet 4.6
+> (`claude-sonnet-4-6`) for most steps — **this is something you set
+> yourself**, not something this prompt can do for you. Run `/model
+> claude-sonnet-4-6` (or just check `/model` shows it) before you start.
+>
+> For Step B's foundational data-model work, or if Claude gets stuck
+> debugging the same failure after 2-3 attempts, switch up with `/model
+> claude-opus-4-8` (or toggle `/fast`), then switch back with `/model
+> claude-sonnet-4-6` once past that point. Full reasoning in
+> `test-plan.md`.
+
 > **Status: HARDENED.** This plan incorporates the Stage 2 team review and all
 > 8 PM decisions recorded in `DECISION-LOG.md`. This is the version to build
 > from. Where this plan and the prototype (`workout-widget-prototype.html`)
