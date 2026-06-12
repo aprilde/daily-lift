@@ -1,6 +1,10 @@
 # Daily Lift — v1 Build Plan: Decision Log
 
-**Status: FINALIZED.** All 8 conflicts from the Stage 2 team review resolved. This log is the complete record of every PM call and the rationale behind it. The resulting plan is `build-plan-hardened.md`.
+_Last updated by: Claude Sonnet 4.6 (`claude-sonnet-4-6`) — tokens for this
+update (measured): ~1,337,800 (covers this update together with the
+`BUILD-LOG.md` and `CLAUDE.md` edits made in the same response)_
+
+**Status: FINALIZED (Stage 2 review).** All 8 conflicts from the Stage 2 team review resolved. This log is the complete record of every PM call and the rationale behind it. The resulting plan is `build-plan-hardened.md`. **One addendum** (#9, image-generation method) was added during Stage 3 pre-build prep — it resolves the open "TBD at build time" left by Decision 5 / edge case #9. See the Addendum section below.
 
 **Token figures methodology:** the "Tokens" line under each conflict is **measured, not estimated** — pulled directly from this session's local transcript log (`~/.claude/projects/.../<session-id>.jsonl`), summing `cache_creation_input_tokens + cache_read_input_tokens + output_tokens` across the API call(s) that processed your decision for that conflict (deduplicated where one call emitted multiple log lines). Each figure represents the call(s) where your decision was recorded — which, in most cases, also included presenting the *next* conflict in the same response, so figures aren't perfectly isolated to a single conflict. The bulk of each number is `cache_read_input_tokens` — the entire accumulated conversation context being re-processed on that turn — which is billed at a steep discount (~10% of fresh-input rate); the raw token count is real, but the dollar cost is much smaller than the count alone implies.
 
@@ -21,6 +25,8 @@ Conflicts resolved:
 **Total measured tokens across all 8 conflicts (incl. writing both final deliverables):** ~2,019,267 / **~$1.90**
 
 **Combined Stage 2 review total (Pass 1/Pass 2 + all 8 conflicts):** ~2,358,867 tokens / **~$3.01**
+
+**Addendum 9 (image-generation method, Stage 3 pre-build prep — not part of the Stage 2 totals above):** 298,758 tokens / ~$0.22
 
 ---
 
@@ -163,6 +169,7 @@ Conflicts resolved:
   - *PM response:* Implicitly accepted the fallback recommendation as-is, and additionally answered an open question carried over from Decision 4 (how the ~70 default-exercise images get sourced) — not a pushback, but added new scope-clarifying direction.
   - *PM's stated direction:* "the designer agent can generate these images in the build stage."
   - *Decision:* one generic placeholder start/end image pair as fallback for custom exercises. The ~70 default-exercise images (Decision 4) will be **generated during the Stage 3 build** by the build-stage "Designer" role — generation method TBD at build time, not sourced externally by the PM.
+  - *Resolved:* see **Addendum 9** below for the generation method (decided during Stage 3 pre-build prep).
 
 - **#10 Stale tip/images for renamed or custom exercises**
   - *Recommended:* acceptable for v1, defer tip/image editing to v2.
@@ -226,5 +233,25 @@ Most of this conflict's original substance — no day-navigation on the widget, 
 **PM's stated rationale:** "A works for the MVP, onboarding will need more discovery to accomplish correctly."
 
 **Additional rationale:** The two specific anxieties Maya named (sets/reps confusion, unfamiliar exercises/posture) already have targeted fixes via Decisions 2 and 4. A generic welcome message is a tone-setting feature that deserves its own discovery work to get right, rather than being bolted on now. Revisit for v2 with proper discovery.
+
+---
+
+## Addendum 9. Image-generation method (resolves Decision 5 / edge case #9's "TBD at build time")
+
+**Status:** Added during Stage 3 pre-build prep, after this log's original "FINALIZED" status. Decision 5 (edge case #9) deliberately left the *generation method* for the ~70 default-exercise images open — this entry resolves that.
+
+**Tokens (measured):** 298,758 — covers the exchange where this direction was given alongside a clarification of what manual testing would look like
+
+**Cost (est.):** ~$0.22
+
+**Open question carried over from Decision 5:** how should the ~70 default-exercise start/end images (Decision 4) actually be produced?
+
+**PM's stated direction:** "images can be AI generated, it's fine if it generates as an illustration. Make sure the styling is calm and all the people are women displaying the exercises. I would like to review one image and approve before moving forward with creating the rest."
+
+**Decision:** AI-generated illustrations (not photos), in a calm, friendly style consistent with the app's supportive tone, with **every human figure depicted as a woman** (matching the target audience). **One sample image** (one exercise's start position) is generated first and **paused for PM approval** of style/tone before the remaining ~69 images plus the generic placeholder pair (Decision 5, edge case #9) are bulk-generated in the same approved style.
+
+**Additional rationale:** Consistent with Decision 4 (images exist to remove Maya's "what does this look like / am I doing it right" friction) and Decision 8 (calm, supportive tone, no intimidation) — illustrations of women performing the exercises reinforce that this app is built for someone like Maya, not a generic stock-photo gym app.
+
+**Build implications:** Step E of `build-plan-hardened.md` includes this image-generation approach with the sample-approval gate as an explicit pause point.
 
 ---
