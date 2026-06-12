@@ -73,21 +73,6 @@ there's no per-token charge — the flat subscription fee applies regardless,
 and this figure is for reference/comparison only. Verify current rates on
 Anthropic's pricing page, as they can change.
 
-**Why this is so much higher than a word-count estimate would suggest:** every
-API call in a Claude Code session carries a fixed **~30,000-token baseline**
-(system prompt + tool definitions) — visible as call 1 above, before any
-review content existed. From then on, prompt caching means each subsequent
-call **re-processes the entire accumulated context** (`cache_read_input_tokens`),
-so the total compounds turn-over-turn as the conversation grows. Most of the
-339,600 total is this re-processed cache-read volume, which is billed at a
-steep discount (~10% of fresh-input rate) — so the dollar cost is much smaller
-than the raw token count implies, but the *token count itself* is real and
-measured, not estimated.
-
-This total covers Pass 1/Pass 2 only (through presenting Conflict 1). The cost
-of working through all 8 conflicts and producing `build-plan-hardened.md` and
-`DECISION-LOG.md` is tracked separately, per-conflict, in `DECISION-LOG.md`.
-
 ---
 
 ## Full Team Reviews
