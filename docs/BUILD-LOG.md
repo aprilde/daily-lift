@@ -43,4 +43,91 @@ Turned the finished prototype into a phased, reviewable specification to hand to
 <!-- Add new entries below as the build progresses -->
 ## Stage 6: Native build (in progress)
 
-_To be updated as the native Android build proceeds: environment setup, what the AI coding tool got right and wrong, errors hit and how they were resolved, and decisions made along the way._
+Before handing anything to an AI coding tool to actually build, ran a
+structured "team review" of the prototype and the draft plan
+(`stage3-build-prompt-DRAFT.md`). Had Claude play six distinct roles - Senior
+Staff Engineer, Android Platform Specialist, QA Engineer, Product Designer,
+Accessibility Specialist, and "Maya" (a stand-in for the actual end user: a
+beginner working out at home) - each reviewing the prototype and draft plan
+from its own priorities, deliberately not allowed to just agree with each
+other.
+
+That review surfaced **8 real conflicts** that the draft plan hadn't
+resolved: whether the home-screen widget is actually in v1, how to
+communicate "3 sets" to the user, index-based vs. stable-ID completion
+tracking, visual richness vs. build cost, a batch of edge cases (empty
+workout day, "Bodyweight" input, long exercise names, missing images for
+custom exercises), accessibility minimums vs. layout density, and how much
+beginner hand-holding to build in. Each was worked through one at a time as a
+PM decision point and recorded - with the options considered and the
+rationale - in `DECISION-LOG.md`.
+
+**Key decisions that came out of this:**
+- **Widget moved to v2.** v1 is the phone app only, but the data model is
+  built widget-ready (stable per-exercise UUIDs, a JSON file +
+  SharedPreferences split) so v2 doesn't require a rewrite.
+- **"3 sets" gets a single static header line** ("Do 3 sets of each exercise
+  below") instead of a new data-model field - solves the "how many rounds?"
+  confusion Maya raised at zero structural cost.
+- **Every exercise gets a stable `id`**; completion tracking keys off `id`,
+  not array position - replaces the prototype's fragile index-reshifting
+  delete logic.
+- **Overrode the engineer's "defer visuals to v2" recommendation.** Per-
+  exercise images became a hard requirement for v1 - both a start-position
+  and an end-position image - because a beginner needs to see correct form
+  and may not recognize an exercise from its name alone.
+- **Resolved a batch of edge cases:** an emptied-out workout day shows "Rest
+  Day" (with "Add exercise" still available, not a dead end); a dedicated
+  "Bodyweight" toggle replaces guessing at magic strings; exercise names are
+  capped at ~30 characters; user-added exercises get a generic placeholder
+  image pair.
+- **Locked an accessibility floor:** 4.5:1 minimum contrast, 48x48dp tap
+  targets, and a 130% font-scale row-wrap fallback (instead of clipping).
+- **No first-launch onboarding in v1** - the two specific anxieties Maya
+  raised are already addressed by the "3 sets" line and the new images;
+  a general "welcome" message needs its own discovery work to get the tone
+  right, so it's parked for v2.
+
+The result is `build-plan-hardened.md` - this is the plan that wins wherever
+it disagrees with the prototype, since every disagreement traces back to one
+of the 8 decisions above, not an oversight.
+
+**Process note:** also set up token-usage tracking for this project at this
+point - going forward, significant deliverables report how many tokens
+(measured from the session transcript, not estimated) they took to produce.
+
+## Step 7 - Native build (in progress)
+
+Before writing any app code, did a round of pre-build prep on top of
+`build-plan-hardened.md`:
+
+- **Clarified what's actually needed from me (the PM)** beyond environment
+  setup - mainly: confirming my dev environment works, approving the visual
+  style of exercise images (one sample image before the full set is
+  generated), and a handful of checks Claude can't do remotely (a 130%
+  font-scale change in my phone's Settings, a real-device day-rollover check,
+  a screen-reader spot-check).
+- **Decided on the image approach:** AI-generated illustrations (not
+  photos), calm/friendly style matching the app's tone, every figure depicted
+  as a woman to match the target audience. One sample image gets generated
+  and approved before the remaining ~70 are bulk-generated.
+- **Added an automated-testing layer to `build-plan-hardened.md`** - at each
+  build step, Claude now writes and runs JUnit unit tests and Compose UI
+  tests via Gradle, and fixes failures itself, *before* asking me to test
+  anything.
+- **Created `test-plan.md`** - every test case (46 total) derived from the
+  build plan and decision log, each marked Automated (Claude) or Manual (PM).
+  34 of 46 are automated; the remaining manual items are mostly quick
+  "does this feel right" passes, with only ~4 being hard requirements
+  (dev environment setup, the image-style approval, and the font-scale
+  check).
+- **Established a documentation convention:** new project documents open
+  with the Claude model version used and a measured token count, and
+  `test-plan.md` includes a recommendation on which Claude model to use for
+  which part of the build (Sonnet 4.6 by default, Opus as a fallback for the
+  foundational data-model step or if Claude gets stuck debugging).
+
+_To be updated as the native Android build proceeds: environment setup, what
+the AI coding tool got right and wrong, errors hit and how they were
+resolved, and decisions made along the way._
+
