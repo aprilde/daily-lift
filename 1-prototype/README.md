@@ -18,7 +18,7 @@ It demonstrates the full concept:
 
 The two HTML files in this folder show a real product decision being made, which is part of the process this repo is meant to make visible:
 - `prototype-testing-edits.html` is the **original version**, where all editing happened directly inside the widget itself: you could change weights, reps, and exercises right on the home screen surface.
-        ![Prototype demo](images/demo.gif)
+        ![Prototype demo](images/final-app-widget-demo.gif)
 - `workout-widget-prototype.html` is the **refined final**, which splits the experience into a read-mostly **widget view** and a fully editable **app view**.
         ![Prototype demo](images/demo.gif)
 
