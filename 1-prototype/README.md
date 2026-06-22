@@ -17,7 +17,7 @@ It demonstrates the full concept:
 ## How this prototype evolved
 
 The two HTML files in this folder show a real product decision being made, which is part of the process this repo is meant to make visible:
-- `prototype-testing-edits.html` is the **original version**, where all editing happened directly inside the widget itself: you could change weights, reps, and exercises right on the home screen surface.
-- `workout-widget-prototype.html` is the **refined final**, which splits the experience into a read-mostly **widget view** and a fully editable **app view**.
+- `prototype-testing-edits.html` is the **original version**, where all editing happened directly inside the widget itself: you could change weights, reps, and exercises right on the home screen surface. ![Prototype demo](images/demo.gif)
+- `workout-widget-prototype.html` is the **refined final**, which splits the experience into a read-mostly **widget view** and a fully editable **app view**. ![Prototype demo](images/demo.gif)
 
 The change wasn't cosmetic, it was a platform-fit call. A real Android home screen widget can't take text input, so a fully editable widget was both a heavy technical ask and the wrong model for the platform. The right design keeps the widget glanceable (view plus the one daily action worth having there, checking an exercise off) and moves all editing into the app it opens. That widget-versus-app split became one of the core product decisions the later stages build on, so keeping both files makes the reasoning legible: the first instinct, the realization that it fought the platform, and the version that matches how widgets actually work.
