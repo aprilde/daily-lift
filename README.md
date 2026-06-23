@@ -69,7 +69,8 @@ daily-lift/
 ├── README.md
 ├── docs/
 │   ├── DISCOVERY.md                            # Brief discovery note
-│   └── BUILD-LOG.md                            # Running process journal
+│   ├── BUILD-LOG.md                            # Running process journal
+│   └── Netnography_Fitness-Beginner-Challenges_20260611.txt   # Netnographic study of real beginner fitness discussions
 ├── 1-prototype/
 │   ├── workout-widget-prototype.html           # The live prototype - open in a browser
 │   ├── prototype-testing-edits.html            # Earlier version (edit-in-widget approach)
@@ -82,10 +83,13 @@ daily-lift/
 │   └── README.md
 ├── 3-build/
 │   ├── stage3-build-prompt-DRAFT.md            # Draft build plan (pre-review input)
+│   ├── BUILD-DIARY.md                          # Running build journal
 │   ├── test-plan.md                            # Full v1 test plan (46 cases)
 │   └── README.md
 └── images/
-    └── demo.gif                                # Screen recording of the prototype
+    ├── demo.gif                                # Screen recording of the prototype
+    ├── edit-in-widget-demo.gif                 # Earlier edit-in-widget approach
+    └── final-app-widget-demo.gif               # Final widget-view/app-view split
 ```
 
 ## Status
