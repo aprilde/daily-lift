@@ -1,8 +1,9 @@
 # Build Log
 
 _Last updated by: Claude Sonnet 4.6 (`claude-sonnet-4-6`) — tokens for this
-update (measured): ~1,337,800 (covers this update together with the
-`DECISION-LOG.md` and `CLAUDE.md` edits made in the same response)_
+update (measured): ~20,753,650 (covers this update together with the
+`BUILD-DIARY.md`, `DECISION-LOG.md`, and `test-plan.md` edits made in the
+same response)_
 
 A running journal of building Daily Lift through an AI-assisted workflow - the decisions, dead ends, and course-corrections along the way. Newest entries are added at the bottom as the project continues.
 
@@ -119,3 +120,44 @@ Before writing any app code, did a round of pre-build prep on top of
 _To be updated as the native Android build proceeds: environment setup, what
 the AI coding tool got right and wrong, errors hit and how they were
 resolved, and decisions made along the way._
+
+## Step 8 - Steps A-D built, design review loop closed
+
+Steps A-D (environment, data model, the "today" screen, and full editing)
+are built and automated-tested. PM manual testing after Step D flagged two
+issues - the Bodyweight toggle and the 130%-font-scale layout - which
+became Steps D.1 (designer review) and D.2 (implementation), inserted
+before Step E.
+
+The headline call from that loop: rather than fix the toggle's labeling as
+the designer initially suggested, the PM **removed it entirely** for the
+MVP - a reversal of Decision 5/edge case #2, edited directly into
+`DECISION-LOG.md` rather than layered on as an addendum. Removing the
+toggle also simplified the 130%-layout fix, since the row had one fewer
+control to account for. Full reasoning for both is in `DECISION-LOG.md` and
+`design-review.md`; the build-level detail (what changed in code, snags,
+test results) is in `BUILD-DIARY.md`'s Step D.1/D.2 entries - this log
+won't restate either.
+
+Next: Step E (detail view, exercise images, all-done message), pending PM
+visual sign-off on D.2.
+
+## Step 9 - Step E built, image generation deferred
+
+D.2's three bugs (scroll, column alignment, default reps text) got PM
+sign-off, clearing the way for Step E: the exercise detail view, tap-to-open
+navigation, and the all-done celebration message - all built and
+automated-tested.
+
+One real gap surfaced going in: Addendum 9 calls for Claude to generate AI
+illustrations (a sample image, PM approval, then bulk-generation), but no
+image-generation tool is available to Claude in this environment. Rather
+than block the rest of Step E on that, the PM chose to build everything
+else now - detail view, navigation, all-done message, full data wiring for
+all 33 exercises' image refs - with placeholder visuals standing in for the
+artwork, and defer actual image generation to a follow-up. Recorded as
+**Addendum 10** in `DECISION-LOG.md`; build-level detail in
+`BUILD-DIARY.md`'s Step E entry.
+
+Next: sort out an image-generation approach (likely PM-generated externally,
+wired in by Claude), then close out the deferred ME1/ME2 manual tests.
