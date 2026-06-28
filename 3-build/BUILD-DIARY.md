@@ -1,7 +1,7 @@
 # Build Diary
 
 _Last updated by: Claude Sonnet 4.6 (`claude-sonnet-4-6`) — tokens for this
-update (measured): ~51,208,736_
+update (measured): ~7,660,141_
 
 A record of this build session, one summary per step (A, B, C...) - written
 once that step is complete, covering what happened plus any notable questions
@@ -416,4 +416,225 @@ steps complete.
 
 **PM notes:**
 - Step by step instructions are rarely correct and I need to go back and forth a lot
-  - QUESTION: is there a way to get the correct instructions on the 1st go? is there something that should be included in the prompt? 
+  - QUESTION: is there a way to get the correct instructions on the 1st go? is there something that should be included in the prompt?
+
+## Step D.1 - Designer review + PM direction (complete)
+
+A designer agent reviewed the Step D editing UI against the PM's two flagged
+issues (Bodyweight toggle UX, 130%-scale layout) plus the full screenshot
+set, and logged 9 specific observations with suggested fixes in
+`design-review.md`, alongside a visual prototype
+(`design-review-prototype.html`) showing every proposed change live in the
+browser.
+
+PM direction on all 9, recorded in `design-review.md`: remove the
+Bodyweight toggle entirely rather than fix its labeling (a scope reversal of
+the original Decision 5/edge case #2 toggle requirement - that requirement
+was edited out of `DECISION-LOG.md` directly rather than superseded by an
+addendum, per PM direction); fix the 130%-scale layout with an explicit
+two-line row structure; widen the reps column; switch emoji icons to vector
+icons; add a focus border to editable fields; bump the "Do 3 sets" line's
+visual weight; fix the Today badge's contrast. Two observations (header
+alignment at 100%, rest-day layout at 130%) needed no separate decision -
+the prototype's own summary table showed one resolves automatically from
+the layout fix and the other had no issue to begin with.
+
+## Step D.2 - Implement design changes + PM sign-off (complete)
+
+Implemented all of Step D.1's PM direction in `TodayScreen.kt`,
+`TodayUiState.kt`, and `TodayViewModel.kt`:
+
+- **Bodyweight toggle removed.** The weight field is now a single free-text
+  `EditableField` (keyboard type changed from `Decimal` to `Text` so
+  "bodyweight" can be typed); `toggleBodyweight()`, the `Switch` UI, and
+  `ExerciseRow.isBodyweight` are gone. `weightDisplay()`/
+  `weightAccessibilityLabel()` were untouched - they already handled the
+  string "bodyweight" generically and didn't depend on the toggle.
+- **Row layout rebuilt** as an explicit two-line `Column` (checkbox + name +
+  rename icon on line 1; weight + reps + delete icon on line 2, indented
+  48dp to align under the name) instead of a single reflowing `FlowRow`.
+  This holds at every font scale rather than just 130%+, and incidentally
+  resolved the header-misalignment observation as a side effect, same as
+  the designer predicted.
+- **Vector icons:** added `androidx.compose.material:material-icons-core`
+  as a new dependency; replaced the ✏️/🗑️ emoji with `Icons.Default.Edit` /
+  `Icons.Default.Delete`.
+- **Polish items:** reps column widened 72dp -> 92dp; weight/reps fields
+  get a 1dp accent-colored border on focus; the "Do 3 sets" line bumped to
+  12sp/`AppTextPrimary.copy(alpha = 0.7f)`; the Today badge's background
+  alpha raised to 0.35f and its text switched to `AppTextPrimary` to clear
+  the 4.5:1 contrast floor.
+
+**Tests rewritten, not just re-run:** D2 in `TodayViewModelTest` now covers
+typing "bodyweight" as free text instead of toggling a switch; D9/D10 in
+`TodayScreenEditingTest` no longer assert on the removed toggle. Added a new
+`ContrastTest` case for the Today badge - passed at alpha 0.35 on the first
+try, no iteration needed.
+
+**Full automated suite:** `./gradlew test connectedDebugAndroidTest
+lintDebug` - 38/38 unit tests, 9/9 instrumented tests (run on `Pixel_10(AVD)
+- 17`, booted fresh for this step), lint clean, 0 failures.
+
+**Snag - no Java on PATH:** the shell had no `java` on PATH at all (not a
+version issue - `/usr/libexec/java_home` found nothing). Resolved by pointing
+`JAVA_HOME` at Android Studio's bundled JBR
+(`/Applications/Android Studio.app/Contents/jbr/Contents/Home`), which
+matched the JDK 21 Android Studio itself uses.
+
+**Manual test handoff:** debug APK installed and the app launched on the
+emulator. PM visual approval needed: toggle removal feels right, 130%
+font-scale layout wraps cleanly, vector icons/focus border/badge contrast
+look correct, overall feel is right. See `design-review.md`'s Step D.2
+section for the full decision table.
+
+**PM notes:**
+
+## Step D.2 follow-up - 3 bugs found in PM visual testing (complete)
+
+PM visual testing of the D.2 build surfaced 3 real bugs, none of which were
+among the original 9 designer observations:
+
+1. **No scroll.** With several exercises (or after adding new ones), the
+   list and the "Add exercise" button got clipped off the bottom of the
+   screen with no way to reach them. `TodayScreen` pinned `HeaderRow` and
+   wrapped the content below it in a `Column.weight(1f).verticalScroll(
+   rememberScrollState())`.
+2. **Weight/reps fields didn't align with the WEIGHT/REPS headers** - the
+   #2/#4 fix from the main D.2 pass (indenting line 2 under the name) was
+   wrong in practice; the prototype's prediction that header alignment would
+   resolve "automatically" from the layout-structure fix didn't hold once
+   built for real. Fixed by making `ColumnHeaders` and the row's line 2
+   share an *identical* `Row` structure (same padding, same `spacedBy`
+   arrangement, same leading/trailing spacers, same fixed column widths) so
+   alignment is now guaranteed by construction, not coincidental.
+3. **Wrong default reps text.** New exercises defaulted to "10-12 reps"
+   instead of "10 reps" - `Exercise.new()` fixed; a regression assertion was
+   added to the existing D5 test.
+
+**Lesson:** a documented assumption ("resolved automatically," sourced from
+the HTML prototype's own decision table) turned out to be wrong once built
+for real and checked on an actual device - the prototype's static HTML/CSS
+didn't reproduce Compose's actual flex-width math closely enough to verify
+that claim. Worth remembering before trusting a prototype's self-assessment
+on layout-structural claims specifically (as opposed to its color/spacing/
+copy proposals, which translated directly).
+
+Added a new instrumented test (`longExerciseListScrollsToRevealAddExerciseButton`)
+to lock in the scroll fix. Full suite re-run: 38/38 unit tests, 10/10
+instrumented tests, lint clean. APK reinstalled and relaunched on the
+emulator for another PM pass.
+
+**PM notes:**
+
+## Step E - Detail view + visuals + all-done message (complete, images deferred)
+
+Before starting, checked for an image-generation tool and found none available
+(no DALL-E/Imagen/MCP image tool accessible in this environment). Addendum 9
+calls for Claude to generate a sample AI illustration, get PM approval, then
+bulk-generate ~66 exercise images + a placeholder pair - none of that is
+possible without an image tool. Flagged it and asked the PM how to proceed;
+she chose to build the rest of Step E now and defer image generation as a
+follow-up. Recorded as **Addendum 10** in `DECISION-LOG.md`.
+
+**Built:**
+
+- **`ExerciseDetailScreen.kt`** (new file, new `detail` package): name, a
+  computed weight/reps line (`weightDisplay()` + `exercise.reps`), start/end
+  image placeholders side by side, and the form tip in a card. The image
+  placeholders are a calm rounded box with a generic figure emoji and a
+  "Start"/"End" label, each exposing a distinct `contentDescription` so the
+  two are testably different even with no real artwork. `imageStartRef`/
+  `imageEndRef` are still threaded through correctly - swapping in real
+  drawables later only touches `ExerciseImagePlaceholder`, nothing else.
+- **Navigation:** tapping an exercise's name (a plain `.clickable` on the
+  `Text`, not a `TapTarget`, so the name's own accessible label isn't
+  overridden) now calls a new `onExerciseClick(Exercise)` callback threaded
+  through `TodayScreen` -> `WorkoutContent` -> `ExerciseRowView`.
+  `MainActivity` holds a `selectedExercise` state and swaps between
+  `TodayScreen` and `ExerciseDetailScreen` - no navigation library added for
+  one screen transition.
+- **All-done message:** new pure function `isAllDone(content: DayContent)`
+  in `TodayUiState.kt` - true only for a non-empty `Workout` day where every
+  row is checked. Naturally false for `Rest` and for an empty day, and
+  naturally false for non-today views (completion is always unchecked there
+  per C8) - no extra `isToday` check needed. Wired into `WorkoutContent` as
+  an `AllDoneBanner`, copy and colors ported directly from
+  `workout-widget-prototype.html`'s `.celebrate` div ("Nice work - you
+  finished today's workout! 🎉", spaced hyphen not em dash, matching the
+  prototype exactly).
+
+**Tests added:** E1 (`SeedWorkoutDataTest` - a seeded exercise resolves its
+own slug-based refs/tip, not the placeholder; repeated exercise names across
+days resolve to the same refs), E2 (already covered by the existing D5
+test), E3/E4 (`TodayUiStateTest` - `isAllDone` true/false across all four
+cases, plus a `TodayScreenEditingTest` UI-level check that the banner
+appears only once the last exercise is checked), E5
+(`ExerciseDetailScreenTest` - renders name/weight-reps/both labeled
+images/tip; back button works), plus a wiring test confirming tapping a
+name reports the right `Exercise` via `onExerciseClick`.
+
+E6 and ME1/ME2 are adapted/deferred per Addendum 10 - see `test-plan.md`'s
+Step E section for the specifics.
+
+**Full automated suite:** `./gradlew test connectedDebugAndroidTest
+lintDebug` - 44/44 unit tests, 14/14 instrumented tests, lint clean (one
+pre-existing-pattern deprecation warning for `Icons.Default.ArrowBack`,
+same category as the `createComposeRule` warnings already accepted
+elsewhere in this project).
+
+**Manual test handoff:** debug APK reinstalled and relaunched on
+`Pixel_10(AVD) - 17`. PM should: tap an exercise name to confirm the detail
+view and back button work, complete every exercise for today to see the
+all-done banner, and weigh in on whether the placeholder image treatment is
+acceptable to ship with for now or whether to prioritize sorting out image
+generation before moving on.
+
+**PM notes:**
+
+## Step E follow-up - placeholder didn't match the prototype (complete)
+
+PM caught two issues with the detail view that should have been checked
+against `workout-widget-prototype.html` before building, not after:
+
+1. **Image placeholder used a generic figure emoji** instead of matching
+   the prototype's actual `.popup .pic` placeholder - a
+   `linear-gradient(135deg, #2a2f52, #1a1d33)` box with centered "Demo
+   image of: {name}" copy. Fixed: `ExerciseImagePlaceholder` now ports that
+   exact gradient and copy pattern, split into Start/End halves (the label
+   itself is this app's own addition - the prototype's placeholder wasn't
+   split, since the two-image requirement is this project's own Decision 4,
+   not something the prototype had).
+2. **Full-screen-with-back-button vs. the prototype's modal popup.** The
+   prototype's actual pattern is a dimmed-backdrop overlay with a centered
+   card, not a full page. This was flagged as an unflagged deviation -
+   `build-plan-hardened.md` says the build "mirrors the prototype's layout
+   and tone" unless a decision overrides it, and there was no recorded
+   decision for popup-vs-full-screen. PM reviewed both options and chose to
+   keep the full-screen page for the real app - now a confirmed decision,
+   not a silent gap. Recorded in `DECISION-LOG.md` Addendum 10.
+
+**Lesson:** check the actual prototype file before building a screen that's
+supposed to mirror it, not just the build plan's prose description of what
+that screen should contain. The build plan said "show a detail view" without
+specifying presentation; defaulting to a generic Android pattern (full-screen
++ back button) instead of checking what the prototype actually did was the
+gap, not the full-screen choice itself.
+
+Full suite re-run: 44/44 unit tests, 14/14 instrumented tests, lint clean.
+APK reinstalled on the emulator.
+
+**PM notes:**
+
+## Step E follow-up - reps removed from detail view (complete)
+
+PM direction: "remove any mention of reps on the image page, it doesn't
+make sense." Reps already lives on the Today screen's editable row;
+repeating it read-only next to the exercise's demo images didn't add
+anything. `ExerciseDetailScreen` now shows weight only. This reverses part
+of `build-plan-hardened.md`'s "weight/reps line" spec for this screen -
+recorded as **Addendum 11** in `DECISION-LOG.md`.
+
+Full suite re-run: 44/44 unit tests, 14/14 instrumented tests, lint clean.
+APK reinstalled.
+
+**PM notes:** 
