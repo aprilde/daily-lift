@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Lift — Design Review Prototype (D.1)</title>
+<style>
+  :root {
+    --bg:        #0E0E1A;
+    --card:      #1A1A2E;
+    --card2:     #22224A;
+    --primary:   #E8EAF6;
+    --muted:     #9EA7C4;
+    --faint:     #A8ACB8;
+    --green:     #4CAF50;
+    --accent:    #7B8CDE;
+    --accent-lo: rgba(123,140,222,0.18);
+    --accent-md: rgba(123,140,222,0.35);
+    --white06:   rgba(255,255,255,0.06);
+    --white10:   rgba(255,255,255,0.10);
+    --white30:   rgba(255,255,255,0.30);
+    --red:       #CF6679;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #08081A;
+    font-family: -apple-system, 'Roboto', sans-serif;
+    color: var(--primary);
+    padding: 32px 16px 64px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  /* ── Section headers ─────────────────────────────── */
+  .section {
+    max-width: 900px;
+    margin: 0 auto 48px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(123,140,222,0.25);
+  }
+  .section-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* ── Compare grid ───────────────────────────────── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .compare.triple {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  @media (max-width: 640px) {
+    .compare, .compare.triple { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .panel-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .panel-label.before { color: var(--red); }
+  .panel-label.after  { color: var(--green); }
+  .panel-label.option { color: var(--accent); }
+
+  /* ── Phone card shell ───────────────────────────── */
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  /* ── Header row ─────────────────────────────────── */
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 4px 12px 16px;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 2px; }
+  .header-day {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .today-badge-old {
+    background: var(--accent-lo);
+    color: #B9C7FF;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  /* FIXED: higher contrast badge */
+  .today-badge-new {
+    background: var(--accent-md);
+    color: var(--primary);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .header-focus { font-size: 11px; color: var(--muted); }
+  .nav-btns { display: flex; }
+  .nav-btn {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--primary);
+    border-radius: 8px; cursor: pointer;
+    border: none; background: transparent;
+  }
+  .nav-btn:hover { background: var(--white06); }
+
+  /* ── Static header line ─────────────────────────── */
+  .sets-line-old {
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 8px 16px;
+  }
+  /* IMPROVED: slightly more prominent */
+  .sets-line-new {
+    font-size: 12px;
+    color: rgba(232,234,246,0.7);
+    padding: 8px 12px 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sets-line-new::before {
+    content: '';
+    display: block;
+    width: 2px;
+    height: 14px;
+    background: rgba(123,140,222,0.5);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Column headers ─────────────────────────────── */
+  .col-headers {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    padding: 8px 8px 8px 16px;
+  }
+  .col-check-space { width: 48px; flex-shrink: 0; }
+  .col-exercise {
+    flex: 1;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: var(--faint);
+  }
+  .col-weight {
+    width: 64px;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: var(--faint);
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .col-reps-old {
+    width: 72px;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: var(--faint);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .col-reps-new {
+    width: 92px;
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+    color: var(--faint);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Exercise row — current (FlowRow simulation) ── */
+  .ex-row-old {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  /* ── Exercise row — proposed: explicit two-Row ───── */
+  .ex-row-new {
+    padding: 8px 8px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ex-row-line1 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ex-row-line2 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 48px; /* indent under name to align with exercise text */
+  }
+
+  /* ── Check box ──────────────────────────────────── */
+  .check {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .check-box {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid var(--white30);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .check-box.done {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-box.done::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; }
+
+  /* ── Exercise name ───────────────────────────────── */
+  .ex-name {
+    flex: 1;
+    font-size: 14px;
+    color: rgba(232,234,246,0.92);
+    min-width: 0;
+  }
+  .ex-name.done { color: var(--faint); text-decoration: line-through; }
+
+  /* ── Icon buttons — OLD (emoji) ──────────────────── */
+  .icon-btn-emoji {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn-emoji:hover { background: var(--white06); }
+
+  /* ── Icon buttons — NEW (vector-style SVG) ────────── */
+  .icon-btn {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: var(--faint);
+  }
+  .icon-btn:hover { background: var(--white06); color: var(--primary); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ── Editable field ──────────────────────────────── */
+  .field {
+    height: 34px;
+    border-radius: 6px;
+    background: var(--white06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: text;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .field.focused {
+    border-color: var(--accent);
+    background: rgba(123,140,222,0.08);
+  }
+  .field.weight-old { width: 64px; }
+  .field.weight-new { width: 64px; }
+  .field.reps-old   { width: 72px; }
+  .field.reps-new   { width: 92px; }
+  .field.placeholder { color: var(--faint); }
+
+  /* ── Bodyweight display ──────────────────────────── */
+  .bw-text {
+    width: 64px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ── Toggle — old (no label) ─────────────────────── */
+  .toggle-wrap-old {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ── Toggle — Option A: with label ───────────────── */
+  .toggle-wrap-a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .toggle-label {
+    font-size: 9px;
+    color: var(--faint);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  /* ── Toggle — Option B: chip button ─────────────── */
+  .bw-chip {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(123,140,222,0.5);
+    background: transparent;
+    color: var(--accent);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .bw-chip.active {
+    background: var(--accent-lo);
+    border-color: var(--accent);
+  }
+  .bw-chip svg { width: 10px; height: 10px; }
+
+  /* ── Toggle switch ───────────────────────────────── */
+  .toggle {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: rgba(123,140,222,0.6); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    top: 2px; left: 2px;
+    transition: left 0.2s;
+  }
+  .toggle.on::after { left: 18px; background: var(--accent); }
+
+  /* ── Add exercise button ─────────────────────────── */
+  .add-btn {
+    margin: 4px 16px 12px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--white06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .add-btn:hover { background: var(--white10); }
+
+  /* ── 130% layout demo ────────────────────────────── */
+  .scale-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.4px;
+  }
+  /* Old at 130% — FlowRow wraps in declaration order */
+  .ex-row-130-old {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+    font-size: 18px; /* ~130% of 14sp */
+  }
+  /* New at 130% — explicit two rows */
+  .ex-row-130-new {
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 18px;
+  }
+  .ex-row-130-line1 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ex-row-130-line2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 52px;
+  }
+
+  /* ── Focus demo ──────────────────────────────────── */
+  .focus-demo-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 16px;
+  }
+
+  /* ── Divider between rows ─────────────────────────── */
+  .row-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.04);
+    margin: 0 16px;
+  }
+
+  /* ── Full proposed screen ─────────────────────────── */
+  .full-screen {
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  /* ── Change badge ─────────────────────────────────── */
+  .change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .change-badge.fix { background: rgba(207,102,121,0.2); color: var(--red); }
+  .change-badge.new-style { background: rgba(123,140,222,0.2); color: var(--accent); }
+
+  /* ── Toggle-state interactive demo ──────────────────── */
+  .interactive-note {
+    font-size: 11px;
+    color: var(--accent);
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<h1>Daily Lift — Design Review Prototype</h1>
+<p class="subtitle">D.1 designer feedback visualized · All 9 observations · Open in a browser to review</p>
+
+<!-- ══════════════════════════════════════════════════════
+     FULL PROPOSED SCREEN
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Full proposed screen — all changes applied</div>
+  <div class="section-note">This is what the Monday workout screen would look like after D.2 with every designer recommendation implemented. Individual changes are broken out below.</div>
+
+  <div class="full-screen">
+    <div class="card">
+      <!-- Header -->
+      <div class="header-row">
+        <div class="header-left">
+          <div class="header-day">
+            Monday
+            <span class="today-badge-new">Today</span>
+            <span class="change-badge new-style">#9 fixed</span>
+          </div>
+          <div class="header-focus">Lower body</div>
+        </div>
+        <div class="nav-btns">
+          <button class="nav-btn">‹</button>
+          <button class="nav-btn">›</button>
+        </div>
+      </div>
+
+      <!-- Sets line — improved -->
+      <div class="sets-line-new">Do 3 sets of each exercise below <span class="change-badge new-style">#8</span></div>
+
+      <!-- Column headers — no REPS header (misaligns) -->
+      <div class="col-headers">
+        <div class="col-check-space"></div>
+        <div class="col-exercise">EXERCISE</div>
+        <div class="col-weight">WEIGHT</div>
+        <div class="col-reps-new" style="text-align:right;">REPS <span class="change-badge new-style">#4</span></div>
+      </div>
+
+      <!-- Row 1: Goblet squat -->
+      <div class="ex-row-new">
+        <div class="ex-row-line1">
+          <div class="check"><div class="check-box"></div></div>
+          <div class="ex-name">Goblet squat</div>
+          <button class="icon-btn" title="Rename">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <span class="change-badge new-style">#5 vector icon</span>
+        </div>
+        <div class="ex-row-line2">
+          <div class="field weight-new">25</div>
+          <div class="toggle-wrap-a">
+            <div class="toggle-label">Bodyweight</div>
+            <div class="toggle"></div>
+            <span class="change-badge new-style">#1A</span>
+          </div>
+          <div class="field reps-new">12-15 reps</div>
+          <button class="icon-btn" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="row-divider"></div>
+
+      <!-- Row 2: Push-ups (bodyweight ON) -->
+      <div class="ex-row-new">
+        <div class="ex-row-line1">
+          <div class="check"><div class="check-box done"></div></div>
+          <div class="ex-name done">Push-ups</div>
+          <button class="icon-btn" title="Rename">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ex-row-line2">
+          <div class="bw-text" style="color:var(--muted)">Body</div>
+          <div class="toggle-wrap-a">
+            <div class="toggle-label">Bodyweight</div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="field reps-new">as many as you can</div>
+          <button class="icon-btn" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="row-divider"></div>
+
+      <!-- Row 3: Dumbbell RDL — field focused -->
+      <div class="ex-row-new">
+        <div class="ex-row-line1">
+          <div class="check"><div class="check-box"></div></div>
+          <div class="ex-name">Dumbbell RDL</div>
+          <button class="icon-btn" title="Rename">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ex-row-line2">
+          <div class="field weight-new focused">20 <span class="change-badge new-style">#6 focus</span></div>
+          <div class="toggle-wrap-a">
+            <div class="toggle-label">Bodyweight</div>
+            <div class="toggle"></div>
+          </div>
+          <div class="field reps-new">8-10 reps</div>
+          <button class="icon-btn" title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="add-btn">+ Add exercise</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #1 — BODYWEIGHT TOGGLE
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #1 — Bodyweight toggle · Two options for PM decision</div>
+  <div class="section-note">The designer flagged two approaches. Choose Option A or Option B — or redirect. Both keep the toggle (locked by Decision 5).</div>
+
+  <div class="compare triple">
+    <!-- BEFORE -->
+    <div class="panel">
+      <div class="panel-label before">Before (current)</div>
+      <div class="card" style="padding:12px 8px;">
+        <div style="font-size:11px;color:var(--faint);margin-bottom:8px;">Toggle floats with no label, sandwiched between weight and reps:</div>
+        <div class="ex-row-old" style="font-size:13px;">
+          <div class="check"><div class="check-box"></div></div>
+          <span style="color:var(--primary);flex:1;min-width:80px;">Goblet squat</span>
+          <div class="icon-btn-emoji">✏️</div>
+          <div class="field weight-old placeholder">—</div>
+          <div class="toggle-wrap-old"><div class="toggle"></div></div>
+          <div class="field reps-old">12-15 r…</div>
+          <div class="icon-btn-emoji">🗑️</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--red);">❌ No label. Toggle looks unrelated to weight field. "—" gives no hint that toggling = bodyweight.</div>
+      </div>
+    </div>
+
+    <!-- OPTION A: label -->
+    <div class="panel">
+      <div class="panel-label option">Option A — Add "Bodyweight" label</div>
+      <div class="card" style="padding:12px 8px;">
+        <div style="font-size:11px;color:var(--faint);margin-bottom:8px;">Label sits directly above the toggle; toggle + weight field grouped:</div>
+        <div class="ex-row-new" style="font-size:13px;">
+          <div class="ex-row-line1">
+            <div class="check"><div class="check-box"></div></div>
+            <div class="ex-name">Goblet squat</div>
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ex-row-line2">
+            <div class="field weight-new placeholder">—</div>
+            <div class="toggle-wrap-a">
+              <div class="toggle-label">Bodyweight</div>
+              <div class="toggle"></div>
+            </div>
+            <div class="field reps-new">12-15 reps</div>
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--green);">✓ Label names the toggle. Lower implementation risk — same control, new label + grouping only.</div>
+      </div>
+    </div>
+
+    <!-- OPTION B: chip -->
+    <div class="panel">
+      <div class="panel-label option">Option B — Replace toggle with chip button</div>
+      <div class="card" style="padding:12px 8px;">
+        <div style="font-size:11px;color:var(--faint);margin-bottom:8px;">Chip lives below the weight field; appears in both states:</div>
+        <div class="ex-row-new" style="font-size:13px;">
+          <div class="ex-row-line1">
+            <div class="check"><div class="check-box"></div></div>
+            <div class="ex-name">Goblet squat</div>
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ex-row-line2">
+            <div class="field weight-new placeholder">—</div>
+            <div class="field reps-new">12-15 reps</div>
+            <button class="icon-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ex-row-line2" style="padding-top:2px;">
+            <button class="bw-chip">Use bodyweight</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);">More self-describing but changes the interaction model. More implementation work.</div>
+      </div>
+    </div>
+  </div>
+  <p class="interactive-note">→ PM decision needed: Option A, Option B, or a different direction?</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #2 — 130% FONT SCALE LAYOUT
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #2 — 130% font-scale layout</div>
+  <div class="section-note">Current FlowRow wraps in control-declaration order (broken). Proposed fix: explicit two-Row structure at 130%+.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before — FlowRow at 130% (broken)</div>
+      <div class="scale-label">Font scale: 130%</div>
+      <div class="card">
+        <div class="ex-row-130-old">
+          <div class="check" style="width:52px;height:52px;"><div class="check-box"></div></div>
+          <span style="color:var(--primary);font-size:18px;flex:1;min-width:120px;">Dumbbell RDL</span>
+          <div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:18px;">✏️</div>
+          <!-- FlowRow wraps here — weight drops to next line -->
+          <div style="width:100%;"></div>
+          <div class="field weight-old" style="font-size:16px;height:38px;">20</div>
+          <!-- toggle appears at far left of line 2 with no context -->
+          <div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;"><div class="toggle" style="width:40px;height:22px;"></div></div>
+          <div class="field reps-old" style="font-size:16px;height:38px;width:72px;">8-10 r…</div>
+          <div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:18px;">🗑️</div>
+        </div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--red);">❌ Toggle jumps to line 2 with no weight context. Reps truncate. Icons scatter. Column headers above no longer align.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label after">After — explicit two-Row at 130%</div>
+      <div class="scale-label">Font scale: 130%</div>
+      <div class="card">
+        <div class="ex-row-130-new">
+          <div class="ex-row-130-line1">
+            <div class="check" style="width:52px;height:52px;"><div class="check-box"></div></div>
+            <span style="color:var(--primary);font-size:18px;flex:1;">Dumbbell RDL</span>
+            <button class="icon-btn" style="width:52px;height:52px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="ex-row-130-line2">
+            <div class="field weight-new" style="font-size:16px;height:38px;width:68px;">20</div>
+            <div class="toggle-wrap-a">
+              <div class="toggle-label" style="font-size:10px;">Bodyweight</div>
+              <div class="toggle" style="width:40px;height:22px;"></div>
+            </div>
+            <div class="field reps-new" style="font-size:16px;height:38px;width:100px;">8-10 reps</div>
+            <button class="icon-btn" style="width:52px;height:52px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--green);">✓ Name always on line 1. Weight, toggle, reps, trash always on line 2. Reps have room. Intentional layout at any font size.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #3 — REPS COLUMN WIDTH
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #3 — Reps column truncation</div>
+  <div class="section-note">"as many as you can" and "8-12 reps" both truncate at the current 72dp column width. Proposed: widen to 92dp.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before — 72dp (truncates)</div>
+      <div class="card" style="padding:12px 8px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="field weight-old">25</div>
+          <div class="toggle-wrap-old"><div class="toggle"></div></div>
+          <div class="field reps-old" style="font-size:13px;color:var(--red);">as many a…</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="field weight-old">15</div>
+          <div class="toggle-wrap-old"><div class="toggle"></div></div>
+          <div class="field reps-old" style="font-size:13px;color:var(--red);">8-12 r…</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label after">After — 92dp (fits)</div>
+      <div class="card" style="padding:12px 8px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="field weight-new">25</div>
+          <div class="toggle-wrap-a"><div class="toggle-label">Bodyweight</div><div class="toggle"></div></div>
+          <div class="field reps-new" style="font-size:13px;">as many as you can</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="field weight-new">15</div>
+          <div class="toggle-wrap-a"><div class="toggle-label">Bodyweight</div><div class="toggle"></div></div>
+          <div class="field reps-new" style="font-size:13px;">8-12 reps</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #5 — VECTOR ICONS
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #5 — Vector icons vs emoji</div>
+  <div class="section-note">Emoji render as colorful bitmaps that can look blurry on real devices. Vector icons match the dark-card aesthetic and can be tinted.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before — emoji icons</div>
+      <div class="card" style="padding:16px;display:flex;gap:12px;align-items:center;">
+        <div class="icon-btn-emoji" style="width:48px;height:48px;font-size:20px;">✏️</div>
+        <div class="icon-btn-emoji" style="width:48px;height:48px;font-size:20px;">🗑️</div>
+        <span style="font-size:12px;color:var(--red);">Colorful, heavy, can blur on device</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label after">After — vector icons (tinted)</div>
+      <div class="card" style="padding:16px;display:flex;gap:12px;align-items:center;">
+        <button class="icon-btn" style="width:48px;height:48px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="icon-btn" style="width:48px;height:48px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+        </button>
+        <span style="font-size:12px;color:var(--green);">Crisp at any size, matches app tone</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #6 — FOCUS STATE
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #6 — Field focus state</div>
+  <div class="section-note">No visual feedback when a field is tapped. Add an accent-colored border so users know the field is active.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before — no focus indicator</div>
+      <div class="card">
+        <div class="focus-demo-row">
+          <span style="font-size:13px;color:var(--muted);flex:1;">Weight field (tapped, but looks the same):</span>
+          <div class="field weight-old">20</div>
+        </div>
+        <div style="padding:0 16px 12px;font-size:11px;color:var(--red);">❌ No border change. User unsure if tap registered.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label after">After — accent border on focus</div>
+      <div class="card">
+        <div class="focus-demo-row">
+          <span style="font-size:13px;color:var(--muted);flex:1;">Weight field (tapped, focused):</span>
+          <div class="field weight-new focused">20</div>
+        </div>
+        <div style="padding:0 16px 12px;font-size:11px;color:var(--green);">✓ Accent border confirms field is active. Matches prototype behavior.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #8 — "DO 3 SETS" LINE
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #8 — "Do 3 sets" header prominence</div>
+  <div class="section-note">Currently reads like fine print. Small adjustments make it a friendly reminder without going bold or commanding.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before</div>
+      <div class="card" style="padding:4px 0;">
+        <div class="sets-line-old">Do 3 sets of each exercise below</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label after">After — slight accent left border + larger size</div>
+      <div class="card" style="padding:4px 0;">
+        <div class="sets-line-new">Do 3 sets of each exercise below</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #9 — TODAY BADGE CONTRAST
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Change #9 — Today badge contrast (accessibility fix, required)</div>
+  <div class="section-note">Current badge is ~3.8:1, below the 4.5:1 floor from Decision 6. Darkening the badge background fixes it.</div>
+
+  <div class="compare">
+    <div class="panel">
+      <div class="panel-label before">Before — ~3.8:1 contrast</div>
+      <div class="card" style="padding:16px;">
+        <div class="header-day">
+          Monday <span class="today-badge-old">Today</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--red);">❌ #B9C7FF on ~#24264A ≈ 3.8:1. Fails 4.5:1 minimum.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label after">After — ≥4.5:1 contrast</div>
+      <div class="card" style="padding:16px;">
+        <div class="header-day">
+          Monday <span class="today-badge-new">Today</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--green);">✓ White text on darker badge background. Confirmed by ContrastTest.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHANGE #7 — REST DAY: NO CHANGE NEEDED
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Observation #7 — Rest day at 130%: no change needed</div>
+  <div class="section-note" style="color:var(--green);">The designer confirmed the rest-day screen handles 130% font scale cleanly. No action required here.</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SUMMARY FOR PM
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Summary — decisions needed from PM</div>
+  <div class="section-note">
+    Review the prototype above, then add your direction to <code>design-review.md</code> under "Step D.1 — PM Direction."
+  </div>
+  <div class="card" style="padding:20px;max-width:600px;margin:0 auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+          <th style="text-align:left;padding:8px 0;color:var(--faint);font-weight:600;">#</th>
+          <th style="text-align:left;padding:8px 0;color:var(--faint);font-weight:600;">Change</th>
+          <th style="text-align:left;padding:8px 0;color:var(--faint);font-weight:600;">PM decision?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">1</td>
+          <td style="padding:8px 0;color:var(--primary);">Bodyweight toggle</td>
+          <td style="padding:8px 0;color:var(--accent);">Yes — Option A (label) or Option B (chip)?</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">2</td>
+          <td style="padding:8px 0;color:var(--primary);">130% layout fix</td>
+          <td style="padding:8px 0;color:var(--green);">Recommend yes (bug-level issue)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">3</td>
+          <td style="padding:8px 0;color:var(--primary);">Reps column wider</td>
+          <td style="padding:8px 0;color:var(--green);">Recommend yes (text truncates)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">4</td>
+          <td style="padding:8px 0;color:var(--primary);">Column headers alignment</td>
+          <td style="padding:8px 0;color:var(--muted);">Resolved by #2 fix — no separate decision</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">5</td>
+          <td style="padding:8px 0;color:var(--primary);">Vector icons</td>
+          <td style="padding:8px 0;color:var(--accent);">Yes or no — PM call on polish priority</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">6</td>
+          <td style="padding:8px 0;color:var(--primary);">Field focus state</td>
+          <td style="padding:8px 0;color:var(--accent);">Yes or no — PM call on polish priority</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">7</td>
+          <td style="padding:8px 0;color:var(--primary);">Rest day at 130%</td>
+          <td style="padding:8px 0;color:var(--muted);">No change needed</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:8px 0;color:var(--primary);">8</td>
+          <td style="padding:8px 0;color:var(--primary);">"Do 3 sets" prominence</td>
+          <td style="padding:8px 0;color:var(--accent);">Yes or no — PM call on polish priority</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:var(--primary);">9</td>
+          <td style="padding:8px 0;color:var(--primary);">Today badge contrast</td>
+          <td style="padding:8px 0;color:var(--red);">Required — accessibility rule from Decision 6</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

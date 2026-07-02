@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild/
+.cxx/
+.kotlin/
+local.properties
+
+# Local machine config (permissions, paths) - not for sharing
+.claude/
+
+# Incidental dev-environment captures (IDE chrome, not app screenshots)
+Screenshot*.png
