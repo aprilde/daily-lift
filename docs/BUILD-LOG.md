@@ -159,4 +159,5 @@ artwork, and defer actual image generation to a follow-up. Recorded as
 **Addendum 10** in `DECISION-LOG.md`; build-level detail in
 `BUILD-DIARY.md`'s Step E entry.
 
-### Next: sort out an image-generation approach (likely PM-generated externally, wired in by Claude), then close out the deferred ME1/ME2 manual tests.
+### Next: 
+Sort out an image-generation approach (likely PM-generated externally, wired in by Claude), then close out the deferred ME1/ME2 manual tests.
