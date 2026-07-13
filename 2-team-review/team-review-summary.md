@@ -46,50 +46,6 @@ resolved into PM decisions. For how these findings were resolved, see
 
 ---
 
-## Token Cost of This Review (measured)
-
-Pulled directly from this session's local transcript log (`message.usage`
-per API call — `cache_creation_input_tokens` + `cache_read_input_tokens` +
-`output_tokens`, deduplicated where one call emitted multiple log lines).
-This covers every API call from your initial review brief through the point
-where Pass 1 + Pass 2 + the Conflict 1 framing were delivered to you.
-
-| Call | What happened | Tokens | Cost (est.) |
-|---|---|---|---|
-| 1 | Initial framing message processed; first tool call (listing project files) | 30,507 | $0.1856 |
-| 2 | Reading `stage2-team-review-prompt.md` / setup | 30,961 | $0.0166 |
-| 3 | Reading the prototype HTML, draft plan, and review brief in full (parallel reads) | 32,119 | $0.0223 |
-| 4 | **Pass 1 (six role reviews) + start of Pass 2** — hit the 32,000-token output cap mid-response | 79,555 | $0.5848 |
-| 5 | Continuation: rest of Pass 2 + Conflict 1 framing + creating `DECISION-LOG.md` | 82,808 | $0.2545 |
-| 6 | Conflict 1 presentation text finalized | 83,650 | $0.0537 |
-| **Total (measured)** | | **339,600** | **~$1.12** |
-
-**Cost basis:** standard published Claude Sonnet 4.x API rates — input
-$3/MTok, output $15/MTok, prompt-cache write (1-hour TTL, used throughout
-this session) $6/MTok, prompt-cache read $0.30/MTok. This is an
-**API-equivalent cost**: it's what this work would bill as on pay-per-token
-API usage. If this session is running under a Claude Pro/Max subscription,
-there's no per-token charge — the flat subscription fee applies regardless,
-and this figure is for reference/comparison only. Verify current rates on
-Anthropic's pricing page, as they can change.
-
-**Why this is so much higher than a word-count estimate would suggest:** every
-API call in a Claude Code session carries a fixed **~30,000-token baseline**
-(system prompt + tool definitions) — visible as call 1 above, before any
-review content existed. From then on, prompt caching means each subsequent
-call **re-processes the entire accumulated context** (`cache_read_input_tokens`),
-so the total compounds turn-over-turn as the conversation grows. Most of the
-339,600 total is this re-processed cache-read volume, which is billed at a
-steep discount (~10% of fresh-input rate) — so the dollar cost is much smaller
-than the raw token count implies, but the *token count itself* is real and
-measured, not estimated.
-
-This total covers Pass 1/Pass 2 only (through presenting Conflict 1). The cost
-of working through all 8 conflicts and producing `build-plan-hardened.md` and
-`DECISION-LOG.md` is tracked separately, per-conflict, in `DECISION-LOG.md`.
-
----
-
 ## Full Team Reviews
 
 ### Senior Staff Engineer agent
@@ -234,3 +190,30 @@ of working through all 8 conflicts and producing `build-plan-hardened.md` and
   the app saves what I type for next time (it does), that's good enough.
 - Would love SOME first-time "you've got this, go slow" message — even just
   once.
+
+---
+
+  ## Token Cost of This Review (measured)
+
+Pulled directly from this session's local transcript log (`message.usage`
+per API call — `cache_creation_input_tokens` + `cache_read_input_tokens` +
+`output_tokens`, deduplicated where one call emitted multiple log lines).
+This covers every API call from your initial review brief through the point
+where Pass 1 + Pass 2 + the Conflict 1 framing were delivered to you.
+
+| Call | What happened | Tokens | Cost (est.) |
+|---|---|---|---|
+| 1 | Initial framing message processed; first tool call (listing project files) | 30,507 | $0.1856 |
+| 2 | Reading `stage2-team-review-prompt.md` / setup | 30,961 | $0.0166 |
+| 3 | Reading the prototype HTML, draft plan, and review brief in full (parallel reads) | 32,119 | $0.0223 |
+| 4 | **Pass 1 (six role reviews) + start of Pass 2** — hit the 32,000-token output cap mid-response | 79,555 | $0.5848 |
+| 5 | Continuation: rest of Pass 2 + Conflict 1 framing + creating `DECISION-LOG.md` | 82,808 | $0.2545 |
+| 6 | Conflict 1 presentation text finalized | 83,650 | $0.0537 |
+| **Total (measured)** | | **339,600** | **~$1.12** |
+
+
+This total covers Pass 1/Pass 2 only (through presenting Conflict 1). The cost
+of working through all 8 conflicts and producing `build-plan-hardened.md` and
+`DECISION-LOG.md` is tracked separately, per-conflict, in `DECISION-LOG.md`.
+
+---

@@ -71,45 +71,11 @@ Covers test-plan items **A1** and **A2** (both Automated/Claude).
 **A3**/**A4** are yours - see PM notes below.
 
 **PM notes:**
-1. setting up environment 
-- don't know what the latest version of studio looks like and I have to give it a screenshot of my screen so it can guide me
-QUESTION: is there a way to get it verify the steps and location of buttons etc before it leads me through it. Calculate the tokens needed to view and process images to understand impact (ask called to tell me)
+1. Environment setup - I don't know what the current version of Android Studio looks like, so I have to screenshot my screen for Claude to guide me. Question: can it verify button locations/steps before walking me through them, and what's the token cost of processing those images? (Ask Claude to quantify.)
+2. Permission fatigue - I have to babysit the session and approve things I don't fully understand as they come up. Asked whether approvals could be pre-planned into the build instructions instead. Resolution: during build hardening, create a permission "plan" like the test plan - have Claude map out every permission the build will need and flag which are safe to pre-approve vs which need in-person review.
 
-2. I have to babysit it and give permission to things I don't fully understand as they come up. 
-QUESTION: Is there anyway to include the approvals ahead of time (in the build instructions) so I don't have to sit by the computer
-ANSWER:  During the build hardening, try making a permission "plan" like I did with the test plan. Ask Claude to map out every possible permission I will need to approve and provide them in a list telling me which are basic and can be pre-approved and which are more risky and need in person approvals. 
+Still saw frequent prompts after that. Fix: Shift+Tab cycles permission modes - "Accept Edits" auto-approves file edits and safe local Bash (mkdir, mv, etc.) without prompting. Added a Gradle-specific allow-rule ("Bash(./gradlew *)" in settings.json) so gradle commands never prompt. Deliberately skipped full "bypass permissions" mode this session, since permission prompts had already caught real prompt-injection attempts - they're a safety net, not just friction.
 
-Tired a fix while building, but still saw a lot of permission requests. before we start step B, I noticed there are many times when you have to ask my permission,        
-  permission for something you are doing. Is there anyway for me to approve all so you  
-  aren't delayed waiting for my reponse?                                                
-  
-⏺ claude-code-guide(Research Claude Code permission modes)
-  ⎿  Done (4 tool uses · 41.8k tokens · 39s)
-  (ctrl+o to expand)
-     
-⏺ Here's the practical setup for this project:
-     
-  Quickest fix — Shift+Tab cycles through permission modes. Switching to "Accept Edits"
-  mode auto-approves file Edits/Writes and safe local Bash commands (mkdir, mv, etc.)
-  without prompting, while still asking before genuinely risky actions.
-  
-  For Gradle specifically — add an allow-rule so ./gradlew commands never prompt. In
-  .claude/settings.json (project-level, can be checked in) or ~/.claude/settings.json
-  (user-level):
-  
-  {
-    "permissions": {
-      "allow": ["Bash(./gradlew *)"]
-    }
-  }
-
-  One caution given this session: I'd steer away from the full "bypass permissions" /
-  fully-autonomous modes here specifically. We've already seen multiple prompt-injection
-  attempts embedded in tool outputs this session — the permission prompts are one of
-  the safety nets that catches an injected instruction trying to trigger something risky
-  (a push, a destructive command, etc.) before it executes. "Accept Edits" + the Gradle
-  allow-rule above should eliminate nearly all the routine delays without giving that
-  up.
 ---
 
 ## Step B - Data models + persistence (complete)
