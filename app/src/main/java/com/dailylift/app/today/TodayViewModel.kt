@@ -20,6 +20,7 @@ class TodayViewModel(
     private val workoutDataStore: WorkoutDataStore,
     private val completionStore: CompletionStore,
     private val clock: Clock = Clock.systemDefaultZone(),
+    private val onDataChanged: () -> Unit = {},
 ) {
     private var workoutData: WorkoutData by mutableStateOf(workoutDataStore.loadOrSeed())
     private val tracker = TodayClockTracker(clock)
@@ -41,6 +42,7 @@ class TodayViewModel(
         if (tracker.today != today) {
             today = tracker.today
             completion = loadOrResetCompletion()
+            onDataChanged()
         }
     }
 
@@ -49,6 +51,10 @@ class TodayViewModel(
         viewedWeekday = viewedWeekday.next(direction)
     }
 
+    /** Looks up [exerciseId] across every day, or `null` if it no longer exists (e.g. deleted). */
+    fun findExercise(exerciseId: String): Exercise? =
+        workoutData.values.firstNotNullOfOrNull { day -> day.exercises.find { it.id == exerciseId } }
+
     /** Toggles [exerciseId]'s done state for today (D1). A no-op when [viewedWeekday] isn't today. */
     fun toggleExerciseChecked(exerciseId: String) {
         if (viewedWeekday != today) return
@@ -56,6 +62,7 @@ class TodayViewModel(
         done[exerciseId] = !(done[exerciseId] ?: false)
         completion = completion.copy(done = done)
         completionStore.save(completion)
+        onDataChanged()
     }
 
     /** Sets [exerciseId]'s weight to [weight] (a numeric string, or `""` for "no weight set"). */
@@ -92,6 +99,7 @@ class TodayViewModel(
         val day = workoutData.getValue(viewedWeekday)
         workoutData = workoutData + (viewedWeekday to transform(day))
         workoutDataStore.save(workoutData)
+        onDataChanged()
     }
 
     private fun loadOrResetCompletion(): Completion {

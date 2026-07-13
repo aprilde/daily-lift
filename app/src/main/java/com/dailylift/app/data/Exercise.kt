@@ -32,7 +32,7 @@ data class Exercise(
             id = UUID.randomUUID().toString(),
             name = name.take(MAX_NAME_LENGTH),
             weight = "",
-            reps = "10 reps",
+            reps = "10",
             tip = "Add your own note here by editing this exercise.",
             imageStartRef = PLACEHOLDER_IMAGE_START_REF,
             imageEndRef = PLACEHOLDER_IMAGE_END_REF,

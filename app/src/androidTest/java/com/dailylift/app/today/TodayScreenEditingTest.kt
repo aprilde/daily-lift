@@ -2,6 +2,8 @@ package com.dailylift.app.today
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.dailylift.app.data.CompletionStore
@@ -100,19 +103,56 @@ class TodayScreenEditingTest {
         composeTestRule.onNodeWithText("New exercise").assertExists()
     }
 
-    /** D9: checkbox, day-nav arrows, pencil, and trash icons are each >=48x48dp (Decision 6). */
+    /**
+     * D9: day-nav arrows are always >=48x48dp. Checkbox/rename/delete are >=32x32dp at the
+     * default (100%) font scale, where they sit in [CompactExerciseRow]'s single dense row
+     * alongside the weight/reps fields - full 48dp there wouldn't fit weight+reps next to a
+     * readable name on a real phone screen. See [coreControlsReturnTo48dpAtLargerFontScale]
+     * for the full 48dp floor once the user increases their text size (Decision 6).
+     */
     @Test
-    fun coreControlsHaveAtLeast48dpTapTargets() {
+    fun coreControlsHaveAtLeast48dpTapTargetsAtDefaultScale() {
         val viewModel = newViewModel(Weekday.MONDAY)
         val rows = (viewModel.uiState.content as DayContent.Workout).rows
         val firstName = rows.first().exercise.name
 
         composeTestRule.setContent { EditableTodayScreen(viewModel) }
 
+        composeTestRule.onNodeWithContentDescription("Previous day")
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+        composeTestRule.onNodeWithContentDescription("Next day")
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
+
+        val compactDescriptions = listOf(
+            "Mark $firstName done",
+            "Rename $firstName",
+            "Delete $firstName",
+        )
+        compactDescriptions.forEach { description ->
+            composeTestRule.onNodeWithContentDescription(description)
+                .assertWidthIsAtLeast(32.dp)
+                .assertHeightIsAtLeast(32.dp)
+        }
+    }
+
+    /** D9: past 100% font scale, checkbox/rename/delete relax to [ExpandedExerciseRow] and grow back to >=48x48dp (Decision 6). */
+    @Test
+    fun coreControlsReturnTo48dpAtLargerFontScale() {
+        val viewModel = newViewModel(Weekday.MONDAY)
+        val rows = (viewModel.uiState.content as DayContent.Workout).rows
+        val firstName = rows.first().exercise.name
+
+        composeTestRule.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1.3f)) {
+                EditableTodayScreen(viewModel)
+            }
+        }
+
         val descriptions = listOf(
             "Mark $firstName done",
-            "Previous day",
-            "Next day",
             "Rename $firstName",
             "Delete $firstName",
         )

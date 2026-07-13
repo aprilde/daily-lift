@@ -39,8 +39,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -50,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,14 +60,16 @@ import com.dailylift.app.data.Exercise
 import com.dailylift.app.ui.theme.AppAccent
 import com.dailylift.app.ui.theme.AppBackground
 import com.dailylift.app.ui.theme.AppCard
+import com.dailylift.app.ui.theme.AppCardLine
 import com.dailylift.app.ui.theme.AppGreen
 import com.dailylift.app.ui.theme.AppTextFaint
 import com.dailylift.app.ui.theme.AppTextMuted
 import com.dailylift.app.ui.theme.AppTextPrimary
 
 private const val TAP_TARGET_DP = 48
-private const val WEIGHT_COLUMN_WIDTH_DP = 64
-private const val REPS_COLUMN_WIDTH_DP = 92
+private const val COMPACT_TAP_TARGET_DP = 32
+/** Weight and reps are both single short values now (e.g. "70", "12") - one narrow width for both. */
+private const val NUMERIC_FIELD_WIDTH_DP = 40
 private const val NAME_MAX_WIDTH_DP = 150
 
 /**
@@ -96,8 +101,15 @@ fun TodayScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .shadow(
+                    elevation = 24.dp,
+                    shape = RoundedCornerShape(22.dp),
+                    ambientColor = Color.Black,
+                    spotColor = Color.Black,
+                )
                 .clip(RoundedCornerShape(22.dp))
-                .background(AppCard),
+                .background(AppCard)
+                .border(1.dp, AppCardLine, RoundedCornerShape(22.dp)),
         ) {
             HeaderRow(uiState, onNavigate)
             Column(
@@ -184,19 +196,20 @@ private fun NavButton(label: String, contentDescription: String, onClick: () -> 
 }
 
 /**
- * A [TAP_TARGET_DP]x[TAP_TARGET_DP] tappable region (D9) exposing exactly [contentDescription] as
- * its accessibility label (D10), regardless of [content]'s own semantics.
+ * A [size]x[size] tappable region (D9, default [TAP_TARGET_DP]) exposing exactly
+ * [contentDescription] as its accessibility label (D10), regardless of [content]'s own semantics.
  */
 @Composable
 private fun TapTarget(
     contentDescription: String,
     enabled: Boolean = true,
+    size: Dp = TAP_TARGET_DP.dp,
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .size(TAP_TARGET_DP.dp)
+            .size(size)
             .clip(RoundedCornerShape(8.dp))
             .clickable(enabled = enabled, onClick = onClick)
             .clearAndSetSemantics { this.contentDescription = contentDescription },
@@ -309,7 +322,7 @@ private fun ColumnHeaders() {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White.copy(alpha = 0.03f))
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -327,7 +340,7 @@ private fun ColumnHeaders() {
             fontSize = 9.5.sp,
             letterSpacing = 0.5.sp,
             textAlign = TextAlign.Center,
-            modifier = Modifier.width(WEIGHT_COLUMN_WIDTH_DP.dp),
+            modifier = Modifier.width(NUMERIC_FIELD_WIDTH_DP.dp),
         )
         Text(
             text = "REPS",
@@ -335,18 +348,19 @@ private fun ColumnHeaders() {
             fontSize = 9.5.sp,
             letterSpacing = 0.5.sp,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(REPS_COLUMN_WIDTH_DP.dp),
+            modifier = Modifier.width(NUMERIC_FIELD_WIDTH_DP.dp),
         )
         Spacer(modifier = Modifier.width(TAP_TARGET_DP.dp))
     }
 }
 
 /**
- * One exercise's editing controls, laid out as an explicit two-line [Column] (not a reflowing
- * [androidx.compose.foundation.layout.FlowRow]) so the structure holds at every font scale,
- * including 130% (MD1): line 1 is checkbox + name + rename icon, line 2 is weight/reps/delete,
- * mirroring [ColumnHeaders]' column widths exactly so weight/reps line up under WEIGHT/REPS
- * regardless of name length (Decision 6).
+ * One exercise's editing controls. At the default (100%) font scale, renders as a single dense
+ * row via [CompactExerciseRow], matching `workout-widget-prototype.html`'s one-line grid exactly.
+ * Past 100% font scale, switches to [ExpandedExerciseRow]'s two-line layout (checkbox + name +
+ * rename icon on line 1, weight/reps/delete on line 2) so text and tap targets still have room to
+ * breathe at larger accessibility sizes, mirroring [ColumnHeaders]' column widths in both cases
+ * (Decision 6).
  */
 @Composable
 private fun ExerciseRowView(
@@ -362,11 +376,190 @@ private fun ExerciseRowView(
     val exercise = row.exercise
     var renaming by remember(exercise.id) { mutableStateOf(false) }
     var nameInput by remember(exercise.id) { mutableStateOf(exercise.name) }
+    val isCompact = LocalDensity.current.fontScale <= 1f
 
+    val onNameInputChange: (String) -> Unit = { value ->
+        nameInput = value.take(Exercise.MAX_NAME_LENGTH)
+        onRename(exercise.id, nameInput)
+    }
+    val onToggleRenaming: () -> Unit = {
+        if (renaming) onRename(exercise.id, nameInput)
+        renaming = !renaming
+    }
+    val onFinishRenaming: () -> Unit = { renaming = false }
+
+    if (isCompact) {
+        CompactExerciseRow(
+            row = row,
+            isToday = isToday,
+            renaming = renaming,
+            nameInput = nameInput,
+            onNameInputChange = onNameInputChange,
+            onToggleRenaming = onToggleRenaming,
+            onFinishRenaming = onFinishRenaming,
+            onToggleChecked = onToggleChecked,
+            onUpdateWeight = onUpdateWeight,
+            onUpdateReps = onUpdateReps,
+            onRequestDelete = onRequestDelete,
+            onExerciseClick = onExerciseClick,
+        )
+    } else {
+        ExpandedExerciseRow(
+            row = row,
+            isToday = isToday,
+            renaming = renaming,
+            nameInput = nameInput,
+            onNameInputChange = onNameInputChange,
+            onToggleRenaming = onToggleRenaming,
+            onFinishRenaming = onFinishRenaming,
+            onToggleChecked = onToggleChecked,
+            onUpdateWeight = onUpdateWeight,
+            onUpdateReps = onUpdateReps,
+            onRequestDelete = onRequestDelete,
+            onExerciseClick = onExerciseClick,
+        )
+    }
+}
+
+/**
+ * Default (100% font scale) layout: one dense row - checkbox, name (flexible, ellipsized), rename
+ * icon, weight, reps, delete - ported directly from the prototype's single-row grid. Icon tap
+ * targets are [COMPACT_TAP_TARGET_DP], not the full [TAP_TARGET_DP]: at real phone widths, a
+ * 48dp checkbox + 48dp rename + 48dp delete alongside the 70dp weight and 92dp reps fields don't
+ * fit next to a readable name column, so this trades some tap-target size for the density the
+ * prototype relies on. The full [TAP_TARGET_DP] returns in [ExpandedExerciseRow] once the user's
+ * font scale grows, where there's vertical room to spare.
+ */
+@Composable
+private fun CompactExerciseRow(
+    row: ExerciseRow,
+    isToday: Boolean,
+    renaming: Boolean,
+    nameInput: String,
+    onNameInputChange: (String) -> Unit,
+    onToggleRenaming: () -> Unit,
+    onFinishRenaming: () -> Unit,
+    onToggleChecked: (String) -> Unit,
+    onUpdateWeight: (String, String) -> Unit,
+    onUpdateReps: (String, String) -> Unit,
+    onRequestDelete: (Exercise) -> Unit,
+    onExerciseClick: (Exercise) -> Unit,
+) {
+    val exercise = row.exercise
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        TapTarget(
+            contentDescription = if (row.checked) {
+                "${exercise.name}, marked done"
+            } else {
+                "Mark ${exercise.name} done"
+            },
+            enabled = isToday,
+            size = COMPACT_TAP_TARGET_DP.dp,
+            onClick = { onToggleChecked(exercise.id) },
+        ) {
+            CheckIndicator(checked = row.checked)
+        }
+
+        if (renaming) {
+            NameField(
+                value = nameInput,
+                onValueChange = onNameInputChange,
+                onDone = onFinishRenaming,
+                widthModifier = Modifier.weight(1f),
+            )
+        } else {
+            Text(
+                text = exercise.name,
+                color = if (row.checked) AppTextFaint else AppTextPrimary.copy(alpha = 0.92f),
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = if (row.checked) TextDecoration.LineThrough else null,
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = { onExerciseClick(exercise) }),
+            )
+        }
+
+        TapTarget(
+            contentDescription = "Rename ${exercise.name}",
+            size = COMPACT_TAP_TARGET_DP.dp,
+            onClick = onToggleRenaming,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                tint = AppTextFaint,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+
+        EditableField(
+            value = exercise.weight,
+            onValueChange = { onUpdateWeight(exercise.id, it) },
+            width = NUMERIC_FIELD_WIDTH_DP.dp,
+            placeholder = "—",
+            keyboardType = KeyboardType.Text,
+            emptyAccessibilityLabel = weightAccessibilityLabel(exercise.weight),
+        )
+
+        EditableField(
+            value = exercise.reps,
+            onValueChange = { onUpdateReps(exercise.id, it) },
+            width = NUMERIC_FIELD_WIDTH_DP.dp,
+            placeholder = "",
+            keyboardType = KeyboardType.Text,
+        )
+
+        TapTarget(
+            contentDescription = "Delete ${exercise.name}",
+            size = COMPACT_TAP_TARGET_DP.dp,
+            onClick = { onRequestDelete(exercise) },
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                tint = AppTextFaint,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Larger-font-scale layout (Decision 6): an explicit two-line [Column] (not a reflowing
+ * [androidx.compose.foundation.layout.FlowRow]) so the structure holds at every scale above 100%,
+ * including 130% (MD1): line 1 is checkbox + name + rename icon, line 2 is weight/reps/delete,
+ * mirroring [ColumnHeaders]' column widths exactly so weight/reps line up under WEIGHT/REPS
+ * regardless of name length. Full [TAP_TARGET_DP] tap targets throughout, since the two-line
+ * structure has the vertical room a single row doesn't.
+ */
+@Composable
+private fun ExpandedExerciseRow(
+    row: ExerciseRow,
+    isToday: Boolean,
+    renaming: Boolean,
+    nameInput: String,
+    onNameInputChange: (String) -> Unit,
+    onToggleRenaming: () -> Unit,
+    onFinishRenaming: () -> Unit,
+    onToggleChecked: (String) -> Unit,
+    onUpdateWeight: (String, String) -> Unit,
+    onUpdateReps: (String, String) -> Unit,
+    onRequestDelete: (Exercise) -> Unit,
+    onExerciseClick: (Exercise) -> Unit,
+) {
+    val exercise = row.exercise
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(
@@ -388,11 +581,8 @@ private fun ExerciseRowView(
             if (renaming) {
                 NameField(
                     value = nameInput,
-                    onValueChange = { value ->
-                        nameInput = value.take(Exercise.MAX_NAME_LENGTH)
-                        onRename(exercise.id, nameInput)
-                    },
-                    onDone = { renaming = false },
+                    onValueChange = onNameInputChange,
+                    onDone = onFinishRenaming,
                 )
             } else {
                 Text(
@@ -408,10 +598,7 @@ private fun ExerciseRowView(
 
             TapTarget(
                 contentDescription = "Rename ${exercise.name}",
-                onClick = {
-                    if (renaming) onRename(exercise.id, nameInput)
-                    renaming = !renaming
-                },
+                onClick = onToggleRenaming,
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -432,7 +619,7 @@ private fun ExerciseRowView(
             EditableField(
                 value = exercise.weight,
                 onValueChange = { onUpdateWeight(exercise.id, it) },
-                width = WEIGHT_COLUMN_WIDTH_DP.dp,
+                width = NUMERIC_FIELD_WIDTH_DP.dp,
                 placeholder = "—",
                 keyboardType = KeyboardType.Text,
                 emptyAccessibilityLabel = weightAccessibilityLabel(exercise.weight),
@@ -441,7 +628,7 @@ private fun ExerciseRowView(
             EditableField(
                 value = exercise.reps,
                 onValueChange = { onUpdateReps(exercise.id, it) },
-                width = REPS_COLUMN_WIDTH_DP.dp,
+                width = NUMERIC_FIELD_WIDTH_DP.dp,
                 placeholder = "",
                 keyboardType = KeyboardType.Text,
             )
@@ -463,7 +650,12 @@ private fun ExerciseRowView(
 
 /** Inline rename input (D4), capped to [Exercise.MAX_NAME_LENGTH] by [onValueChange]. */
 @Composable
-private fun NameField(value: String, onValueChange: (String) -> Unit, onDone: () -> Unit) {
+private fun NameField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onDone: () -> Unit,
+    widthModifier: Modifier = Modifier.widthIn(max = NAME_MAX_WIDTH_DP.dp),
+) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -472,8 +664,7 @@ private fun NameField(value: String, onValueChange: (String) -> Unit, onDone: ()
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { onDone() }),
         cursorBrush = SolidColor(AppAccent),
-        modifier = Modifier
-            .widthIn(max = NAME_MAX_WIDTH_DP.dp)
+        modifier = widthModifier
             .background(Color.White.copy(alpha = 0.06f), RoundedCornerShape(6.dp))
             .padding(horizontal = 6.dp, vertical = 4.dp),
     )

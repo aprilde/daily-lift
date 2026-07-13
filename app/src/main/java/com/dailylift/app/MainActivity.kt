@@ -18,15 +18,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.dailylift.app.data.CompletionStore
 import com.dailylift.app.data.Exercise
-import com.dailylift.app.data.WorkoutDataStore
 import com.dailylift.app.detail.ExerciseDetailScreen
 import com.dailylift.app.today.TodayScreen
-import com.dailylift.app.today.TodayViewModel
 import com.dailylift.app.ui.theme.DailyLiftTheme
 
-private const val PREFS_NAME = "daily_lift_prefs"
+/** Widget deep-link: opens straight to this exercise's detail screen, if it still exists. */
+const val EXTRA_EXERCISE_ID = "com.dailylift.app.EXTRA_EXERCISE_ID"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +45,10 @@ class MainActivity : ComponentActivity() {
                         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                     }
 
-                    var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
+                    var selectedExercise by remember {
+                        val deepLinkedId = intent.getStringExtra(EXTRA_EXERCISE_ID)
+                        mutableStateOf(deepLinkedId?.let { viewModel.findExercise(it) })
+                    }
                     val exercise = selectedExercise
 
                     if (exercise != null) {
@@ -79,8 +80,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-private fun Context.createTodayViewModel() = TodayViewModel(
-    workoutDataStore = WorkoutDataStore(filesDir),
-    completionStore = CompletionStore(getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)),
-)

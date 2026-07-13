@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Daily Lift</string>
+    <string name="widget_description">Today\'s workout, glanceable and checkable from your home screen.</string>
 </resources>

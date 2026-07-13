@@ -24,5 +24,8 @@ class CompletionStore(private val prefs: SharedPreferences) {
 
     companion object {
         private const val KEY_COMPLETION = "completion"
+
+        /** The [android.content.SharedPreferences] file name this store reads/writes. */
+        const val PREFS_NAME = "daily_lift_prefs"
     }
 }

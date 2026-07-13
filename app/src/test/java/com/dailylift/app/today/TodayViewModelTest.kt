@@ -103,7 +103,7 @@ class TodayViewModelTest {
         assertEquals(existingIds.size + 1, rows.size)
         val added = rows.last().exercise
         assertFalse(added.id in existingIds)
-        assertEquals("10 reps", added.reps)
+        assertEquals("10", added.reps)
         assertEquals(Exercise.PLACEHOLDER_IMAGE_START_REF, added.imageStartRef)
         assertEquals(Exercise.PLACEHOLDER_IMAGE_END_REF, added.imageEndRef)
         assertTrue(added.tip.isNotBlank())
@@ -149,6 +149,53 @@ class TodayViewModelTest {
         assertNotNull(reloaded)
         assertEquals("2024-01-02", reloaded!!.date)
         assertTrue(reloaded.done.isEmpty())
+    }
+
+    /**
+     * The widget-refresh hook: `onDataChanged` fires on every mutation path (toggle, weight/reps/
+     * rename/add/delete, and a real day-rollover), never on construction alone.
+     */
+    @Test
+    fun onDataChangedFiresOnEveryMutationButNotOnConstruction() {
+        var callCount = 0
+        val completionStore = CompletionStore(FakeSharedPreferences())
+        val clock = MutableClock(Instant.parse("2024-01-01T12:00:00Z"), ZoneOffset.UTC)
+        val viewModel = TodayViewModel(
+            workoutDataStore = WorkoutDataStore(tempFolder.newFolder()),
+            completionStore = completionStore,
+            clock = clock,
+            onDataChanged = { callCount++ },
+        )
+        assertEquals(0, callCount)
+
+        val exerciseId = viewModel.workoutRows().first().exercise.id
+
+        viewModel.toggleExerciseChecked(exerciseId)
+        assertEquals(1, callCount)
+
+        viewModel.updateWeight(exerciseId, "20")
+        assertEquals(2, callCount)
+
+        viewModel.updateReps(exerciseId, "8")
+        assertEquals(3, callCount)
+
+        viewModel.renameExercise(exerciseId, "Renamed")
+        assertEquals(4, callCount)
+
+        viewModel.addExercise()
+        assertEquals(5, callCount)
+
+        viewModel.deleteExercise(exerciseId)
+        assertEquals(6, callCount)
+
+        // No real rollover yet (still Monday) - refreshToday() is a no-op, no extra call.
+        viewModel.refreshToday()
+        assertEquals(6, callCount)
+
+        // Advancing past midnight is a real rollover - fires once more.
+        clock.instant = Instant.parse("2024-01-02T01:00:00Z")
+        viewModel.refreshToday()
+        assertEquals(7, callCount)
     }
 
     /** A [Clock] whose [instant] can be advanced, simulating time passing while the app is backgrounded. */
