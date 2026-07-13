@@ -1,9 +1,3 @@
----
-artifact: prd
-version: "1.0"
-created: 2026-07-13T00:00:00.000Z
-status: complete (retroactive)
----
 # PRD: Daily Lift
 
 ## Overview
