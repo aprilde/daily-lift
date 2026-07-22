@@ -39,15 +39,17 @@ This is a solo, AI-directed demonstration project (see root `README.md` - "the f
 - Stable UUID exercise IDs from day one - a deliberate Phase 1 decision specifically so Phase 2 could reuse the data model without a migration (DECISION-LOG, Decision 3).
 - Accessibility floor: 48dp tap targets, WCAG-contrast-checked text colors, and a row layout that stays single-line at 100% font scale but relaxes to two lines above that (up to ~130%) rather than clipping.
 
-### Phase 2 - Home screen widget (complete, with one scope reversal)
+### Phase 2 - Home screen widget (complete; original scope restored)
 
-- Built with Jetpack Glance. Shows today's real workout - day, focus, exercise list with weight/reps - read-only.
+- Built with Jetpack Glance. Shows today's real workout - day, focus, exercise list with weight/reps.
+- **Tapping a checkbox marks that exercise done for the day, in place, without opening the app.**
 - Tapping an exercise's name deep-links into the app, directly to that exercise's detail screen.
 - Tapping anything else on the widget opens the app to the Today screen.
-- Long exercise lists show a "+N more" line instead of overflowing.
-- Widget and app stay in sync on edits: near-instant if the widget was recently interacted with, a short delay otherwise (eventually consistent, not always instant - see Technical Considerations).
-- **Reversed during the build:** the original Phase 2 scope (carried over from the Phase 1 decision log) included a tappable checkbox to check off exercises directly from the widget. This was built and extensively tested on a physical device (Nothing Phone 2a, Nothing OS). The toggle logic itself was confirmed correct - by pulling the app's actual persisted completion data directly off the device mid-debugging - but the widget's own list rendering couldn't reliably display it correctly on that device (checkmarks appearing on the wrong row, or not updating at all). Rather than ship something unreliable, the checkbox was made view-only; tapping it opens the app instead. Full debugging trail: DECISION-LOG Addendum 13.
-- **Also temporarily reduced:** resizable widget sizes (small/medium/large, with row count adjusting to fit) were built and worked correctly for read-only content, but are disabled in favor of one fixed size, pending re-verification after the checkbox change. Not dropped - just unverified since the last code change touching widget rendering.
+- Long exercise lists scroll inside the widget, with a "+N more" line when a day has more exercises than the widget's height allows.
+- Widget and app stay in sync in both directions - a checkbox ticked on the widget shows in the app, and an edit made in the app shows on the widget.
+- **Previously reversed, now restored:** the tappable checkbox was built, reversed mid-build as unreliable, then restored once the actual cause was found. The original diagnosis - a Glance/RemoteViews rendering limitation on the test device - was wrong. The widget was reading its data *outside* the Glance composition, so the value was captured once when the widget's session started and replayed on every redraw. Saves landed correctly and were then painted over with stale data, which is why inspecting the persisted data mid-debugging showed it working. Full account: DECISION-LOG Addendum 14.
+- **Resizing restored:** widget sizes adjust row count to fit again (`SizeMode.Exact`). The fixed single size was collateral from the same misdiagnosis - and under `SizeMode.Single`, `LocalSize` always reported the declared minimum, silently capping every widget at 2 rows regardless of how large it was on screen.
+- **Not yet confirmed:** the midnight weekday rollover. The stale-data bug had frozen the widget on one weekday; the fix is in and the mechanism is understood, but a live rollover hasn't been observed yet at time of writing.
 
 ### Out of Scope (both phases, deliberate)
 
@@ -93,8 +95,3 @@ Two files, both on-device only: a JSON workout file (days, exercises, weights, r
 - `docs/DISCOVERY.md` - the research this product's assumptions are grounded in
 - `3-build/test-plan.md` - the Phase 1 test plan (46 cases)
 
-### Revision History
-
-| Version | Date | Notes |
-| --- | --- | --- |
-| 1.0 | 2026-07-13 | Initial PRD, written retroactively after Phase 1 and Phase 2 both shipped |
