@@ -1,16 +1,8 @@
 # Daily Lift — v1 Build Plan: Decision Log
 
-_Last updated by: Claude Sonnet 4.6 (`claude-sonnet-4-6`) — tokens for this
-update (measured): ~1,337,800 (covers this update together with the
-`BUILD-LOG.md` and `CLAUDE.md` edits made in the same response)_
+_Last updated by: Claude Sonnet 4.6 (`claude-sonnet-4-6`)_
 
-**Status: FINALIZED (Stage 2 review).** All 8 conflicts from the Stage 2 team review resolved. This log is the complete record of every PM call and the rationale behind it. The resulting plan is `build-plan-hardened.md`. **One addendum** (#9, image-generation method) was added during Stage 3 pre-build prep — it resolves the open "TBD at build time" left by Decision 5 / edge case #9. See the Addendum section below.
-
-**Token figures methodology:** the "Tokens" line under each conflict is **measured, not estimated** — pulled directly from this session's local transcript log (`~/.claude/projects/.../<session-id>.jsonl`), summing `cache_creation_input_tokens + cache_read_input_tokens + output_tokens` across the API call(s) that processed your decision for that conflict (deduplicated where one call emitted multiple log lines). Each figure represents the call(s) where your decision was recorded — which, in most cases, also included presenting the *next* conflict in the same response, so figures aren't perfectly isolated to a single conflict. The bulk of each number is `cache_read_input_tokens` — the entire accumulated conversation context being re-processed on that turn — which is billed at a steep discount (~10% of fresh-input rate); the raw token count is real, but the dollar cost is much smaller than the count alone implies.
-
-**Cost figures methodology:** the "Cost (est.)" line under each conflict applies standard published Claude Sonnet 4.x API rates to that conflict's measured token breakdown — input $3/MTok, output $15/MTok, prompt-cache write (1-hour TTL, used throughout this session) $6/MTok, prompt-cache read $0.30/MTok. This is an **API-equivalent cost** (what this work would bill as on pay-per-token API usage); under a Claude Pro/Max subscription there's no per-token charge and this is for reference only. Verify current rates on Anthropic's pricing page, as they can change.
-
-(See `team-review-summary.md` for the separate, also-measured total covering the Pass 1/Pass 2 review that produced these 8 conflicts — ~339,600 tokens / ~$1.12.)
+**Status: FINALIZED (Stage 2 review).** All 8 conflicts from the Stage 2 team review resolved. This log is the complete record of every PM call and the rationale behind it. The resulting plan is `build-plan-hardened.md`. **Six addenda** (#9-14) were added after this log's original "FINALIZED" status, during Stage 3 build, a post-install design pass, the Phase 2 widget build, and a later widget debugging session that corrected one of the earlier addenda's conclusions — see the Addendum section below.
 
 Conflicts resolved:
 1. Is the widget actually in v1?
@@ -22,19 +14,9 @@ Conflicts resolved:
 7. Widget interactivity — lock the v1 scope
 8. Beginner hand-holding vs. simplicity
 
-**Total measured tokens across all 8 conflicts (incl. writing both final deliverables):** ~2,019,267 / **~$1.90**
-
-**Combined Stage 2 review total (Pass 1/Pass 2 + all 8 conflicts):** ~2,358,867 tokens / **~$3.01**
-
-**Addendum 9 (image-generation method, Stage 3 pre-build prep — not part of the Stage 2 totals above):** 298,758 tokens / ~$0.22
-
 ---
 
 ## 1. Is the home-screen widget actually in v1?
-
-**Tokens (measured):** 171,736 — covers recording this decision and presenting Conflict 2
-
-**Cost (est.):** ~$0.32
 
 **Options on the table:**
 - A. Phone app first — v1 = working phone app + widget-ready data model (stable IDs, JSON/SharedPrefs split). Widget becomes v2.
@@ -53,10 +35,6 @@ Conflicts resolved:
 ---
 
 ## 2. Communicating "sets" (static 3 sets, not per-exercise/customizable)
-
-**Tokens (measured):** 274,877 — covers presenting the revised options after your reframe, recording this decision, and presenting Conflict 3
-
-**Cost (est.):** ~$0.19
 
 **Original framing — two options for whether/how sets get a data-model home:**
 - A. Content-only fix — bake "sets" into the existing `reps` string via a seed-data rewrite, no schema change.
@@ -82,10 +60,6 @@ Conflicts resolved:
 
 ## 3. Stable exercise IDs vs. index-based completion
 
-**Tokens (measured):** 195,321 — covers recording this decision and presenting Conflict 4 (Round 1)
-
-**Cost (est.):** ~$0.13
-
 **Options on the table:**
 - A. Index-based, matches the prototype exactly. No `id` field; `deleteExercise` keeps index-reshifting logic. Cost shifts to v2 (data migration when widget needs stable IDs).
 - B. Add a stable `id` field now (UUID at creation). Completion map keys off `id`. Simplifies v1's own delete logic; zero migration for v2.
@@ -101,10 +75,6 @@ Conflicts resolved:
 ---
 
 ## 4. Visual richness vs. build cost (image placeholder + per-exercise visuals)
-
-**Tokens (measured):** 326,639 — covers presenting Round 2 (the static-vs-GIF sub-decision), recording the final decision, and presenting Conflict 5
-
-**Cost (est.):** ~$0.33
 
 **Round 1 — options on the table:**
 - A. Drop the image area entirely for v1 — text-only detail view, all visuals deferred to v2 (Engineer's original recommendation).
@@ -138,10 +108,6 @@ Conflicts resolved:
 ---
 
 ## 5. Edge-case triage
-
-**Tokens (measured):** 238,620 — covers recording this decision and presenting Conflict 6
-
-**Cost (est.):** ~$0.23
 
 **Already resolved/N/A (no decision needed):** widget/app sync (N/A v1, per Decision 1), deleting last exercise/index-reshifting (resolved by Decision 3), reordering exercises (not a v1 feature), completion resets daily + non-today days always show unchecked (confirmed intentional), rest-day "Next up" hardcoded to Monday (acceptable given fixed Mon-Fri schedule).
 
@@ -177,10 +143,6 @@ Conflicts resolved:
 
 ## 6. Accessibility minimums vs. layout density
 
-**Tokens (measured):** 252,921 — shared with Conflict 7 below; covers recording both decisions and presenting Conflict 8
-
-**Cost (est.):** ~$0.22 (shared with Conflict 7)
-
 **Options on the table:**
 - A. Accessibility floor — fix contrast (replace `--faint`-equivalent for all meaningful text, ≥4.5:1, free); expand tap targets to 48dp via padding (visual icons unchanged); define a 130% font-scale floor with row-wrap fallback (name on top, weight/reps/toggle/actions below) instead of clipping. 200% scale deferred to v2.
 - B. Density-first — fix contrast only; leave tap targets and font-scale handling as-is (single-line dense row, as in the prototype); full compliance becomes a v2 polish pass.
@@ -197,10 +159,6 @@ Conflicts resolved:
 
 ## 7. Widget interactivity — lock the v1 scope
 
-**Tokens (measured):** included in Conflict 6's figure above (252,921) — both were resolved in the same response, since this conflict required no separate PM decision
-
-**Cost (est.):** included in Conflict 6's ~$0.22
-
 **Status:** Largely resolved by Decision 1 (widget moved to v2) — no options were presented and no PM vote was requested.
 
 **PM response:** N/A — this conflict was not put to the PM as a decision point; it was presented as already resolved by Decision 1's ripple effect, with one carryover requirement noted below.
@@ -212,10 +170,6 @@ Most of this conflict's original substance — no day-navigation on the widget, 
 ---
 
 ## 8. Beginner hand-holding vs. simplicity
-
-**Tokens (measured):** 559,153 — covers recording this final decision and writing both deliverables (`build-plan-hardened.md` and the finalized `DECISION-LOG.md`)
-
-**Cost (est.):** ~$0.48
 
 **Options on the table:**
 - A. No onboarding screen — rely on per-exercise tips + the new start/end images (Decisions 2 and 4) to carry reassurance.
@@ -236,10 +190,6 @@ Most of this conflict's original substance — no day-navigation on the widget, 
 ## Addendum 9. Image-generation method (resolves Decision 5 / edge case #9's "TBD at build time")
 
 **Status:** Added during Stage 3 pre-build prep, after this log's original "FINALIZED" status. Decision 5 (edge case #9) deliberately left the *generation method* for the ~70 default-exercise images open — this entry resolves that.
-
-**Tokens (measured):** 298,758 — covers the exchange where this direction was given alongside a clarification of what manual testing would look like
-
-**Cost (est.):** ~$0.22
 
 **Open question carried over from Decision 5:** how should the ~70 default-exercise start/end images (Decision 4) actually be produced?
 
@@ -285,5 +235,79 @@ Most of this conflict's original substance — no day-navigation on the widget, 
 **Decision:** the detail view (`ExerciseDetailScreen.kt`) shows weight only, not reps. This reverses part of `build-plan-hardened.md`'s "Screens & behavior" point 6, which specified a "weight/reps line" for this screen.
 
 **Rationale:** reps already lives on the Today screen's editable row — repeating it read-only next to the exercise's demo image added information that didn't serve a purpose specific to this screen. Weight stays since it's still a useful at-a-glance reference alongside the images.
+
+---
+
+## Addendum 12. Today screen design pass — card depth, row density, and reps format
+
+**Status:** Added in a post-install design review, after this log's original "FINALIZED" status. PM installed the v1 build on a physical device and found the card looked flat and rows misaligned versus `workout-widget-prototype.html`.
+
+**Bug found, not a decision:** the card in `TodayScreen.kt` had no border and no shadow at all — `AppCardLine` (the prototype's `--line` border color) was already defined in `Color.kt` but was never actually applied anywhere. Fixed by adding a 1dp `AppCardLine` border and a drop shadow to the card, matching the prototype's `.card` styling. Also widened the weight/reps column to 70px and row/header horizontal padding to 16dp to match the prototype's grid exactly (both were previously narrower, a small unflagged deviation).
+
+**Decision (row layout - reopens Decision 6):** Decision 6 intended each exercise row to render as a single dense line at 100% font scale (matching the prototype), relaxing to two lines only above 100% scale. The shipped code never implemented that condition — it always rendered two lines, at every scale. This read as "strange alignment" versus the prototype.
+
+- *Options:* (A) implement the font-scale-conditional single-row layout Decision 6 originally intended; (B) keep the always-two-line behavior as shipped.
+- *PM response:* Chose A.
+- *Complication found during implementation:* a single row with the checkbox, rename, and delete icons all at the full 48dp accessibility tap-target size (Decision 6) doesn't fit next to the 70dp weight and 92dp reps fields on real phone widths — the fixed columns alone exceed a typical ~360dp screen before any room is left for the exercise name.
+- *Options presented:* (A) 32dp icons at default (100%) font scale, matching the prototype's density, with the full 48dp floor returning automatically once the user increases their phone's text size (the existing two-line layout becomes the >100%-scale fallback); (B) keep 48dp icons always and abandon the single-row match.
+- *PM response:* Chose A.
+- **Decision:** `ExerciseRowView` now branches on `LocalDensity.current.fontScale`. At <=100% it renders `CompactExerciseRow`, a single dense row (checkbox, name, rename icon, weight, reps, delete) with 32dp tap targets, matching the prototype's grid. Above 100% it renders `ExpandedExerciseRow`, the prior two-line layout, with the full 48dp tap targets. `TodayScreenEditingTest.coreControlsHaveAtLeast48dpTapTargetsAtDefaultScale` and the new `coreControlsReturnTo48dpAtLargerFontScale` test both scale points.
+
+**Decision (weight/reps field width and reps format):** PM asked for the exercise name to get more room, the weight field narrowed to ~3 characters, and the reps field matched to the same width — which only works if reps values are short. The seed data's reps were a mix of ranges ("8-12 reps"), per-side counts ("8-10 ea leg"), a time-based hold ("30-60 sec"), and one open-ended AMRAP ("as many as you can"), none of which fit a 3-character field as-is.
+
+- *PM's stated direction, given in three parts:* (1) ranges collapse to their upper bound and drop the word "reps" (e.g. "8-12 reps" -> "12"); (2) per-side qualifiers ("ea leg"/"ea side") drop too, down to a bare number; (3) time-based holds (Wall sit, Plank) keep a unit ("60 sec") so a bare number can't be misread as a rep count; (4) Push-ups' open-ended AMRAP gets a concrete target number instead ("15").
+- **Decision:** `WEIGHT_COLUMN_WIDTH_DP`/`REPS_COLUMN_WIDTH_DP` (70/92) collapsed into one `NUMERIC_FIELD_WIDTH_DP = 40` constant used by both fields. Every exercise in `SeedWorkoutData.kt` and `Exercise.new()`'s default reps ("10 reps" -> "10") updated to the new short format per the rules above.
+- **Tradeoff, flagged not silently made:** per-side reps ("do 10 *each leg*") no longer carry that qualifier anywhere in the UI - the number alone doesn't say "each side." PM chose this over keeping the longer text and accepting a wider field.
+
+---
+
+## Addendum 13. Home screen widget (Phase 2 build) — checkbox interactivity reversed after on-device evidence
+
+**Status:** Added after this log's original "FINALIZED" status. Decision 1/Decision 7 deferred the widget to "once it's actually being built" - this addendum is that build.
+
+**Context:** Built with Jetpack Glance (`androidx.glance:glance-appwidget:1.1.1`), reusing the existing `WorkoutDataStore`/`CompletionStore`/`TodayViewModel` directly (a new `AppContainer.kt` centralizes construction so the widget and `MainActivity` never diverge). Confirmed PM choices going in: lazy rollover (matches the phone app's existing pattern, no exact-alarm), tapping a name deep-links to that exercise's detail screen, one responsive/resizable size.
+
+**Decision (checkbox interactivity - reverses part of Decision 7):** Decision 7 called for the widget's checkbox to toggle completion directly via a tap, no app open required. Built and extensively tested on-device; ultimately reversed.
+
+- *What was tried, in order, each with real on-device testing:* (1) a tappable checkbox using `actionRunCallback` - toggled but didn't visually update reliably; (2) `SizeMode.Responsive` → `SizeMode.Exact` for the resize-time click failures; (3) removing a redundant concurrent widget-refresh path that was racing itself; (4) converting the row list to Glance's `LazyColumn` with a stable per-row `itemId`, after finding taps on one row were firing another row's action entirely (root cause: Android's `PendingIntent` equality doesn't consider intent extras, so multiple rows' tap targets collapsed into one shared identity).
+- *Conclusive evidence, not a guess:* pulled the app's persisted `completion` SharedPreferences file directly off the test device mid-debugging. It showed the toggle/save logic was correct throughout - the widget's own on-screen checkmarks were displaying state that didn't match the real saved data. That isolates the remaining failure to Glance's list-rendering reliability on this test device/launcher (Nothing OS), not to any app logic.
+- *PM response:* given that evidence, chose to make the widget's checkbox read-only rather than continue debugging a platform rendering issue with uncertain odds of resolution.
+- **Decision:** the widget's checkbox is now view-only (matches weight/reps, which were already read-only per the original prototype-mode design). Tapping it - or any other non-editable part of a row - opens the app instead of toggling in place, consistent with the rest of the "read-only, tap opens the app" pattern. `ToggleExerciseAction` (the removed tap-to-toggle handler) was deleted rather than left dead in the tree.
+- **Also decided, same debugging session:** resizing is temporarily disabled (`SizeMode.Single`, one fixed size) as the reliability baseline established once the checkbox stopped being interactive. Re-enabling resizing (`SizeMode.Exact`, tested working for read-only content) is a follow-up, not blocked on anything specific - just hasn't been re-verified since this fix.
+
+**Additional finding, not requiring a PM decision:** the phone app → widget refresh (`onDataChanged` → `updateAll`) is eventually consistent, not always instant. If the widget was recently interacted with (its Glance "session" is warm) it updates promptly; if the widget has been idle and an edit is made purely in the phone app, the widget can take a few seconds to catch up (confirmed on retest - not stuck, just delayed) rather than updating the moment the edit happens. Acceptable for v1 given the widget's read-only nature; no action taken.
+
+---
+
+## Addendum 14. Widget checkbox restored — Addendum 13's diagnosis was wrong
+
+**Status:** Added after the widget had been in real use for a few days. PM reported two symptoms: the widget was stuck showing Tuesday, and the checkboxes did nothing. Both turned out to be the same root cause, and that cause also invalidates the conclusion recorded in Addendum 13.
+
+**The bug:** `DailyLiftWidget` read its data *above* `provideContent`, not inside it. Glance calls `provideGlance` once when a widget session starts and then keeps that composition alive; later `update()` calls recompose the existing composition rather than re-running the function. A value read outside the composition is therefore captured once, at session start, and replayed on every subsequent redraw — indefinitely.
+
+That single placement produced both reported symptoms:
+
+- *The frozen weekday:* the widget kept redrawing whichever day its session happened to begin on.
+- *The dead checkboxes:* taps saved correctly, then the widget redrew its stale snapshot over the result.
+
+**Why Addendum 13 reached the wrong conclusion.** The decisive evidence there was: persisted completion data is correct, the widget's display is not — read as proof that the failure was in Glance's rendering rather than the app's logic. That evidence was real and correctly gathered. But it fits two explanations, not one: the renderer being unreliable, *or* the renderer being handed stale data. The second was never ruled out, and it was the true one. The scope cut followed from an inference with an untested alternative, not from the evidence itself.
+
+Worth stating plainly because the failure mode is generic: **"saves correctly, displays wrong" is a statement about what the renderer received, not about the renderer.** The instinct to trust persisted data as ground truth was right; treating the display as the only remaining suspect was the error.
+
+**Two further bugs found in the same pass, each mimicking the same symptom:**
+
+- Reading data *asynchronously* inside the composition (`produceState`) also fails, differently: after a tap, Glance tears the session down within a few hundred milliseconds, and the read does not reliably finish first. The composition is cancelled before it can emit. The read must be synchronous — Glance composes off the main thread, so this is safe.
+- Caching that read against a revision key (`remember(revision)`) fails a third way: when the revision write hasn't propagated by the time the composition runs, the cache returns *pre-toggle* data. This is what produced "I can check the box but I can't uncheck it" — the un-check saved, the widget redrew as still-checked, and the natural response was to tap again, which re-checked it. Confirmed from device logs showing `true -> false` immediately followed by `false -> true` on the same exercise.
+
+**Also fixed, same session:**
+
+- Widget refreshes are now serialised and conflated through a single consumer. Two overlapping Glance sessions cancel each other and the losing one silently drops its redraw, so a refresh fired per-edit into a background scope raced itself. This is the real explanation for the "eventually consistent, warm session" behaviour recorded as an accepted quirk at the end of Addendum 13 — it was a self-inflicted race, not a property of Glance.
+- The app now re-reads from disk on resume. It held completion in memory from construction, so widget taps were invisible to it, and its next edit would write the stale copy back over them.
+- `SizeMode.Exact` restored. Under `SizeMode.Single`, `LocalSize` always reports the provider's declared minimum, so the row-count logic capped *every* widget at 2 rows regardless of actual size — a second, unnoticed bug that the fixed-size decision had been masking.
+- The checkbox tap target moved off the checkmark glyph, which rendered as an empty string when unchecked and so collapsed to zero size, taking no taps at all.
+
+**Decision:** the widget's checkbox is tappable-to-toggle again, as Decision 7 originally specified. Addendum 13's *decision* was sound given what was believed at the time; only its premise was wrong. Both stay in this log — the reversal and its correction — because the sequence is the useful part.
+
+**Verified on-device** (Nothing Phone 2a): correct weekday, checkboxes toggling in both directions across repeated taps, and app and widget agreeing in both directions. **Not yet verified:** the midnight weekday rollover, which cannot be observed without either waiting for it or changing the device clock. The periodic ~30-minute update bounds the worst case at roughly half an hour of staleness past midnight.
 
 ---
