@@ -1,9 +1,11 @@
 # Daily Lift — Home Screen Widget (Phase 2) — Build Plan
 
-**Status note (read this first):** this is the plan exactly as written and approved before implementation began, kept as the historical record. Two things changed during the build based on real on-device evidence — both documented in full in `../2-team-review/DECISION-LOG.md`, Addendum 13:
+**Status note (read this first):** this is the plan exactly as written and approved before implementation began, kept as the historical record. Two things were cut during the build and both have since been restored — the cut is documented in `../2-team-review/DECISION-LOG.md`, Addendum 13, and the restoration in Addendum 14:
 
-- The checkbox is **read-only**, not tappable-to-toggle as planned in Step 4 below. Extensive on-device testing traced the failure to Glance's list-rendering reliability on the test device, not the app's logic (confirmed by reading the app's persisted data directly off the device mid-debugging). Tapping the checkbox now opens the app instead.
-- Resizing is **temporarily disabled** (`SizeMode.Single`, one fixed size) rather than the `SizeMode.Responsive` three-breakpoint design in Step 8. It was tangled up with the checkbox bug above and hasn't been re-verified since checkbox interactivity was removed.
+- The checkbox **is tappable-to-toggle**, as originally planned in Step 4 below. It was briefly made read-only after on-device testing appeared to trace the failure to Glance's list-rendering reliability. That diagnosis was wrong: the widget was reading its data outside the Glance composition, so it captured the data once when its session started and redrew that same snapshot forever. Taps saved correctly and were painted over — which is why reading the persisted data off the device showed everything working, and why the platform took the blame.
+- Resizing **is enabled** (`SizeMode.Exact`), covering the row-count breakpoints in Step 8. It was briefly pinned to `SizeMode.Single` as collateral from the same misdiagnosis — which had its own cost, since under `SizeMode.Single` the size query always returns the declared minimum, silently capping every widget at 2 rows however large it was.
+
+One item from the plan below is fixed but not yet confirmed in the wild: the lazy midnight rollover. The stale-data bug had frozen the widget on a single weekday, and while the fix is in and understood, a live rollover hasn't been observed yet.
 
 Everything else below was built as planned.
 
