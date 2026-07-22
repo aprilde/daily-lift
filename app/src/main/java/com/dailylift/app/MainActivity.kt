@@ -39,7 +39,21 @@ class MainActivity : ComponentActivity() {
                     val lifecycleOwner = LocalLifecycleOwner.current
                     DisposableEffect(lifecycleOwner) {
                         val observer = LifecycleEventObserver { _, event ->
-                            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshToday()
+                            when (event) {
+                                Lifecycle.Event.ON_RESUME -> {
+                                    viewModel.refreshToday()
+                                    viewModel.reloadFromDisk()
+                                    // Unconditional, unlike refreshToday's own onDataChanged, which
+                                    // only fires when the weekday actually changed: opening the app
+                                    // is a cheap moment to repair a widget that drifted for any reason.
+                                    context.refreshWidget()
+                                }
+                                // Leaving the app is the moment just before the widget gets looked
+                                // at, so this is what makes an edit appear to be there already
+                                // rather than arriving a beat late.
+                                Lifecycle.Event.ON_PAUSE -> context.refreshWidget()
+                                else -> Unit
+                            }
                         }
                         lifecycleOwner.lifecycle.addObserver(observer)
                         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }

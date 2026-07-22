@@ -36,6 +36,19 @@ class TodayViewModel(
     val uiState: TodayUiState
         get() = buildTodayUiState(workoutData, completion, today, viewedWeekday)
 
+    /**
+     * Re-reads workout data and completion from disk.
+     *
+     * This instance is not the only writer: the widget's checkbox taps go through their own
+     * short-lived [TodayViewModel], so anything ticked on the home screen lands on disk while this
+     * one holds a stale copy in memory. Without this the app shows state that disagrees with the
+     * widget, and the next edit here writes the stale copy back over it. Call from `ON_RESUME`.
+     */
+    fun reloadFromDisk() {
+        workoutData = workoutDataStore.loadOrSeed()
+        completion = loadOrResetCompletion()
+    }
+
     /** Recomputes "today" from [clock]; call from an `ON_RESUME` lifecycle callback. */
     fun refreshToday() {
         tracker.refreshToday()
@@ -50,6 +63,9 @@ class TodayViewModel(
     fun navigate(direction: Int) {
         viewedWeekday = viewedWeekday.next(direction)
     }
+
+    /** Whether [exerciseId] is currently marked done for today. */
+    fun checkedState(exerciseId: String): Boolean = completion.done[exerciseId] == true
 
     /** Looks up [exerciseId] across every day, or `null` if it no longer exists (e.g. deleted). */
     fun findExercise(exerciseId: String): Exercise? =
